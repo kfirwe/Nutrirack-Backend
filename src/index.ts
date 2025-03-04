@@ -5,6 +5,9 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 
+import { errorHandler } from './middlewares/errorHandler';
+import scanRoutes from "./routes/scan.routes";
+
 dotenv.config();
 
 const app: Application = express();
@@ -20,6 +23,12 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+// Mount food scanning routes under /scan
+app.use('/scan', scanRoutes);
+
+// Error handling middleware (should come after all routes)
+app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
 
