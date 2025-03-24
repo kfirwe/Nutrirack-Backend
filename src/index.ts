@@ -5,13 +5,14 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 
-import { errorHandler } from './middlewares/errorHandler';
+import { errorHandler } from "./middlewares/errorHandler";
 import scanRoutes from "./routes/scan.routes";
 
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT as string, 10) || 5000;
+const HOST = process.env.HOST || "localhost";
 
 app.use(cors());
 app.use(express.json());
@@ -25,7 +26,7 @@ app.use(
 );
 
 // Mount food scanning routes under /scan
-app.use('/scan', scanRoutes);
+app.use("/scan", scanRoutes);
 
 // Error handling middleware (should come after all routes)
 app.use(errorHandler);
@@ -36,7 +37,7 @@ mongoose
   .connect(process.env.MONGO_URI || "")
   .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
+    app.listen(PORT, HOST, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })
