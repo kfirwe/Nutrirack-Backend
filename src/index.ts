@@ -13,7 +13,7 @@ import userRoutes from "./routes/user.routes";
 dotenv.config();
 
 const app: Application = express();
-const PORT = parseInt(process.env.PORT as string, 10) || 5000;
+const PORT = parseInt(process.env.PORT as string, 10) || 3000;
 const HOST = process.env.HOST || "localhost";
 
 app.use(cors());
