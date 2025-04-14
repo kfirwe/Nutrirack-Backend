@@ -1,6 +1,9 @@
 import User from "../models/User.model";
 import { Request, Response } from "express";
-import { fetchUserMacrosGoals, getUserMacrosToday } from "../services/user.service";
+import {
+  fetchUserMacrosGoals,
+  getUserMacrosToday,
+} from "../services/user.service";
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
@@ -32,8 +35,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getMacrosForToday  = async (req: Request, res: Response) => {
+export const getMacrosForToday = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       res.status(401).json({ message: "Unauthorized" });
@@ -41,20 +43,19 @@ export const getMacrosForToday  = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await getUserMacrosToday(userId); 
+    const user = await getUserMacrosToday(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    res.status(200).json({ totalMacros: user }); 
+    res.status(200).json({ totalMacros: user });
   } catch (error) {
     console.error("Error fetching user macros for today:", error);
     res.status(500).json({ message: "Failed to retrieve today's macros" });
   }
 };
-
 
 export const getUserMacrosGoals = async (req: Request, res: Response) => {
   try {
@@ -68,6 +69,6 @@ export const getUserMacrosGoals = async (req: Request, res: Response) => {
     res.status(200).json({ goals });
   } catch (error) {
     console.error("Error fetching user macros goals:", error);
-     res.status(500).json({ message: "Failed to retrieve user macros goals" });
+    res.status(500).json({ message: "Failed to retrieve user macros goals" });
   }
 };
