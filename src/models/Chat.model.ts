@@ -27,7 +27,7 @@ const ChatSchema = new Schema<IChat>(
       ref: "User",
       required: true,
     },
-    messages: [MessageSchema], // Stores messages within each chat
+    messages: [MessageSchema],
   },
   { timestamps: true }
 );

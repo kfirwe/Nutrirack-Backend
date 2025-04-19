@@ -3,20 +3,16 @@ import mongoose from "mongoose";
 import MealHistory from "../models/MealHostory.model";
 import User from "../models/User.model";
 
-// Fetch user's meal history and calculate the total nutrition values consumed today
 export const getUserMealHistory = async (userId: string) => {
   try {
-    // Get today's date, ignoring the time
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Fetch all meals for today
     const meals = await MealHistory.find({
       userId: new mongoose.Types.ObjectId(userId),
       date: { $gte: today },
-    }).populate("ingredients"); // Assuming ingredients contain nutrition details
+    }).populate("ingredients");
 
-    // Calculate total calories, protein, carbs, and fat consumed today
     let totalCalories = 0,
       totalProtein = 0,
       totalCarbs = 0,
@@ -46,21 +42,18 @@ export const generateAIResponse = async (
   userId: string
 ) => {
   try {
-    // Fetch user details
     const user = await User.findById(userId);
     if (!user) {
       throw Error("User not found");
     }
 
-    // Get today's date, ignoring the time
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Fetch all meals for today
     const mealHistory = await MealHistory.find({
       userId: new mongoose.Types.ObjectId(userId),
       date: { $gte: today },
-    }).populate("ingredients"); // Assuming ingredients contain nutrition details
+    }).populate("ingredients");
     const mealSummary = mealHistory
       .map(
         (meal) =>
@@ -81,7 +74,6 @@ export const generateAIResponse = async (
     const { totalCalories, totalProtein, totalCarbs, totalFat, meals } =
       await getUserMealHistory(userId);
 
-    // 3️⃣ Calculate remaining goals (Ensure no negative values)
     const remainingCalories = Math.max(user.goals.calories - totalCalories, 0);
     const remainingProtein = Math.max(user.goals.protein - totalProtein, 0);
     const remainingCarbs = Math.max(user.goals.carbs - totalCarbs, 0);
@@ -111,8 +103,6 @@ export const generateAIResponse = async (
   
         Respond in a friendly, helpful, and informative way.
       `;
-
-    console.log("Prompt:", prompt);
 
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,

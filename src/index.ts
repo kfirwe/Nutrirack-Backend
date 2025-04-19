@@ -28,19 +28,11 @@ app.use(
   })
 );
 
-// Mount food scanning routes under /scan
 app.use("/scan", scanRoutes);
-
-// Mount auth routes under /auth
 app.use("/auth", authRoutes);
-
-// Mount user routes under /user
 app.use("/user", userRoutes);
-
-// Mount chat routes under /chat
 app.use("/chat", chatRoutes);
 
-// Error handling middleware (should come after all routes)
 app.use(errorHandler);
 
 mongoose.set("strictQuery", true);

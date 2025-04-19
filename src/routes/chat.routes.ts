@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 
-router.get("/", authenticate, getChats); // Get user chats
-router.post("/new", authenticate, createChat); // Create new chat
-router.post("/send", authenticate, sendMessage); // Send message
+router.get("/", authenticate, getChats);
+router.post("/new", authenticate, createChat);
+router.post("/send", authenticate, sendMessage);
 
 export default router;
