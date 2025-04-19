@@ -9,6 +9,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import scanRoutes from "./routes/scan.routes";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
+import chatRoutes from "./routes/chat.routes";
 
 dotenv.config();
 
@@ -27,16 +28,11 @@ app.use(
   })
 );
 
-// Mount food scanning routes under /scan
 app.use("/scan", scanRoutes);
-
-// Mount auth routes under /auth
 app.use("/auth", authRoutes);
-
-// Mount user routes under /user
 app.use("/user", userRoutes);
+app.use("/chat", chatRoutes);
 
-// Error handling middleware (should come after all routes)
 app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
