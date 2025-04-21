@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import bcrypt from "bcrypt";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import User from "../models/User.model";
+import { StatusCodes } from "http-status-codes";
+import {
+  findUserByEmail,
+  registerUser as registerUserService,
+  comparePassword,
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../services/auth.service";
 
-/**
- * ✅ Register User
- */
 export const registerUser = async (
   req: Request,
   res: Response,
@@ -14,36 +17,25 @@ export const registerUser = async (
   try {
     const { name, email, password } = req.body;
 
-    // 🔍 Check if the user already exists
-    const existingUser = await User.findOne({ email });
-
+    const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      res.status(400).json({ error: "User already exists with this email." });
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: "User already exists with this email." });
       return;
     }
 
-    // 🔒 Hash the password for new users
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await registerUserService(name, email, password);
 
-    // 🆕 Create a new user
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
+    res.status(StatusCodes.CREATED).json({
+      message: "User registered successfully",
+      user: newUser,
     });
-
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
   } catch (error) {
-    console.error("❌ Error in registerUser:", error);
     next(error);
   }
 };
 
-/**
- * ✅ Login User
- */
 export const loginUser = async (
   req: Request,
   res: Response,
@@ -52,70 +44,65 @@ export const loginUser = async (
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(StatusCodes.NOT_FOUND).json({ message: "User not found" });
       return;
     }
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
-      res.status(401).json({ message: "Invalid credentials" });
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Invalid credentials" });
       return;
     }
-    // Generate token
-    const token = jwt.sign(
-      { id: (user._id as string).toString() },
-      process.env.JWT_SECRET || "",
-      {
-        expiresIn: "1h",
-      }
-    );
 
-    // get user last login
-    const lastLogin = user.lastLogin;
+    const accessToken = generateAccessToken(user._id.toString());
+    const refreshToken = generateRefreshToken(user._id.toString());
 
-    res.status(200).json({ message: "Login successful", token, lastLogin });
+    res.status(StatusCodes.OK).json({
+      message: "Login successful",
+      accessToken,
+      refreshToken,
+      lastLogin: user.lastLogin,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * ✅ Refresh Token
- */
 export const refreshToken = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { token } = req.body;
+    const { refreshToken } = req.body;
 
-    if (!token) {
-      res.status(400).json({ message: "Refresh token is required" });
+    if (!refreshToken) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Refresh token is required" });
       return;
     }
 
-    const secret = process.env.JWT_SECRET || "";
-    let decodedToken: JwtPayload;
-
+    let decodedToken;
     try {
-      decodedToken = jwt.verify(token, secret) as JwtPayload;
-    } catch (error) {
-      res.status(403).json({ message: "Invalid or expired refresh token" });
+      decodedToken = verifyRefreshToken(refreshToken);
+    } catch {
+      res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ message: "Invalid or expired refresh token" });
       return;
     }
 
-    const newToken = jwt.sign({ id: decodedToken.id }, secret, {
-      expiresIn: "1h",
-    });
+    const newAccessToken = generateAccessToken((decodedToken as any).id);
 
-    res
-      .status(200)
-      .json({ message: "Token refreshed successfully", token: newToken });
+    res.status(StatusCodes.OK).json({
+      message: "Access token refreshed successfully",
+      accessToken: newAccessToken,
+    });
   } catch (error) {
     next(error);
   }

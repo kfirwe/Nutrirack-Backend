@@ -1,44 +1,48 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import User from "../models/User.model"; // Import User model
+import { StatusCodes } from "http-status-codes";
+import User from "../models/User.model";
 
 export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Get token from headers
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      res.status(401).json({ message: "Access denied" });
+      res.status(StatusCodes.UNAUTHORIZED).json({ message: "Access denied: No token provided" });
       return;
     }
 
-    // Decode token to get user ID
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || ""
-    ) as JwtPayload;
-    const userId = decoded.id; // Extract user ID from payload
+    let decoded: JwtPayload;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || "") as JwtPayload;
+    } catch (err: any) {
+      if (err.name === "TokenExpiredError") {
+        res.status(StatusCodes.UNAUTHORIZED).json({ message: "Access token expired" });
+        return;
+      }
 
+      res.status(StatusCodes.FORBIDDEN).json({ message: "Invalid token" });
+      return;
+    }
+
+    const userId = decoded.id;
     if (!userId) {
-      res.status(403).json({ message: "Invalid token payload" });
+      res.status(StatusCodes.FORBIDDEN).json({ message: "Invalid token payload" });
       return;
     }
 
-    // Find user in database to confirm existence
     const user = await User.findById(userId);
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(StatusCodes.NOT_FOUND).json({ message: "User not found" });
       return;
     }
 
-    // Attach the user ID to the request object
-    req.user = { id: (user._id as string).toString() }; // Ensure it's a string
-
-    next(); // Move to the next middleware/controller
-  } catch (err) {
-    res.status(403).json({ message: "Invalid token" });
-    return;
+    req.user = { id: user._id.toString() };
+    next();
+  } catch {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Server error during authentication" });
   }
 };

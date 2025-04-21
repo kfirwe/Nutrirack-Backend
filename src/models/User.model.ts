@@ -1,7 +1,7 @@
-// The User that registers with the app will have a set of goals for their daily nutrition intake. These goals will be used to calculate the percentage of the daily goal that each meal contributes to. The User model will have the following fields:
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   age: number;
   email: string;
@@ -19,6 +19,7 @@ export interface IUser extends Document {
 
 const UserSchema: Schema = new Schema(
   {
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
     name: { type: String, required: true },
     age: { type: Number, required: false },
     email: { type: String, required: true, unique: true },
