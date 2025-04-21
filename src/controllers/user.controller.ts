@@ -5,31 +5,45 @@ import {
   getUserById,
   getUserMacrosToday,
 } from "../services/user.service";
+import { calculateMacros } from "../services/calculateMacros";
+
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
-    const { calories, protein, carbs, fat, height, weight, age } = req.body;
+    const { height, weight, goalWeight, age, gender, activityLevel } = req.body;
+
     if (!req.user) {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    const userId = (req.user as { id: string })?.id;
 
+    const userId = (req.user as { id: string })?.id;
     const user = await User.findById(userId);
+
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    user.goals = { calories, protein, carbs, fat };
-    user.height = height;
-    user.weight = weight;
-    if (age) user.age = age;
-    user.lastLogin = new Date();
+    const macros = calculateMacros({ age, gender, height, weight, goalWeight, activityLevel });
+
+    Object.assign(user, {
+      height,
+      weight,
+      goalWeight,
+      age,
+      gender,
+      activityLevel,
+      goals: macros,
+      lastLogin: new Date(),
+    });
 
     await user.save();
 
-    res.status(200).json({ message: "Profile updated successfully", user });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      goals: macros,
+    });
   } catch (error) {
     console.error("Error updating user profile:", error);
     res.status(500).json({ message: "Failed to update profile" });

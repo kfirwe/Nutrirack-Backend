@@ -1,4 +1,3 @@
-// When User update his goals it set it here
 import mongoose, { Schema, Document } from "mongoose";
 
 interface NutritionDetails {
