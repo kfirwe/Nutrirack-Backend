@@ -15,11 +15,11 @@ export const calculateTotalMacros = (meals: any[]): Macros => {
   );
 };
 
-export const getUserById = async (userId: string) => {
+export const findUserById = async (userId: string) => {
   return await User.findById(userId);
 };
 
-export const getUserMacrosToday = async (userId: string) => {
+export const findUserMacrosToday = async (userId: string) => {
   const today = new Date();
   const startOfDay = new Date(today.setHours(0, 0, 0, 0));
   const endOfDay = new Date(today.setHours(23, 59, 59, 999));
@@ -32,7 +32,7 @@ export const getUserMacrosToday = async (userId: string) => {
   return calculateTotalMacros(meals);
 };
 
-export const fetchUserMacrosGoals = async (userId: string) => {
+export const findUserMacrosGoals = async (userId: string) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
   
