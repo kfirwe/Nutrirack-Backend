@@ -1,53 +1,28 @@
 import { Request, Response } from "express";
-import mongoose from "mongoose";
 import {
   findOrCreateFood,
   parseNutritionDetails
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
-import User from "../models/User.model";
-import { getMealHistories } from "../services/meal.service";
+import { addRecentFoodService, getRecentFoodsService } from "../services/meal.service";
 import { getUserById } from "../services/user.service";
 
+
 export const recentFoods = async (req: Request, res: Response) => {
-    try {
-        const { userId } = req.params;
+  try {
+    const { userId } = req.params;
+    const recentFoods = await getRecentFoodsService(userId);
 
-        const mealHistories = await getMealHistories(userId);
-
-        if (!mealHistories.length) {
-            res.status(200).json({ recentFoods: [] });
-            return;
-        }
-
-        const uniqueFoodsMap = new Map();
-
-        for (const meal of mealHistories) {
-            for (const food of meal.ingredients) {
-                if (food.name !== "NOT_REAL_IGNORE" && !uniqueFoodsMap.has(food.name)) {
-                    uniqueFoodsMap.set(food.name, food);
-                    if (uniqueFoodsMap.size === 4) {
-                        break;
-                    }
-                }
-            }
-            if (uniqueFoodsMap.size === 4) {
-                break;
-            }
-        }
-
-        const recentFoods = Array.from(uniqueFoodsMap.values());
-
-        res.status(200).json({ recentFoods });
-    } catch (error) {
-        console.error("Error fetching recent foods:", error);
-        res.status(500).json({ error: "Failed to fetch recent foods" });
-    }
+    res.status(200).json({ recentFoods });
+  } catch (error) {
+    console.error("Error fetching recent foods:", error);
+    res.status(500).json({ error: "Failed to fetch recent foods" });
+  }
 };
+
 
 export const addRecentFood = async (req: Request, res: Response) => {
   try {
-    console.log("📌 Adding food to meal history...");
     const { userId, foodName, details } = req.body;
 
     if (!userId || !foodName || !details) {
@@ -55,30 +30,12 @@ export const addRecentFood = async (req: Request, res: Response) => {
       return;
     }
 
-    console.log("📌 Adding to meal history:", { userId, foodName, details });
+    await addRecentFoodService(userId, foodName, details);
 
-    const food = await findOrCreateFood(
-      foodName,
-      parseNutritionDetails(details)
-    );
-
-    const newMeal = new MealHistory({
-      userId,
-      name: `Meal with ${foodName}`,
-      date: new Date(),
-      ingredients: [food._id], 
-      nutritionDetails: food.nutritionDetails,
-    });
-
-    await newMeal.save();
-
-    console.log("✅ Food added successfully to history!");
     res.status(200).json({ success: true, message: "Food added!" });
-    return;
   } catch (error) {
     console.error("❌ Error adding food to history:", error);
     res.status(500).json({ success: false, message: "Server error" });
-    return;
   }
 };
 
@@ -111,13 +68,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
 
-    // ✅ Validate user ID
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(400).json({ error: "Invalid user ID" });
-      return;
-    }
 
-    // ✅ Get current date (Year, Month, Day)
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
@@ -169,7 +120,6 @@ export const CheckGoals = async (req: Request, res: Response) => {
       `🎯 User Goals: Cals: ${calories}, Protein: ${protein}, Carbs: ${carbs}, Fat: ${fat}`
     );
 
-    // ✅ Check Which Goals Are Reached
     const reachedGoals = [];
 
     if (totalCals >= calories) reachedGoals.push("Calories");
@@ -179,7 +129,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
 
     let message = "";
     if (reachedGoals.length === 0) {
-      res.status(200).json({ message: "NO_GOALS_REACHED" }); // Frontend will ignore
+      res.status(200).json({ message: "NO_GOALS_REACHED" }); 
       return;
     } else if (reachedGoals.length === 4) {
       message = "🎉 All nutrition goals reached! Great job! 🎯";

@@ -12,7 +12,6 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// Protected routes: the user must be authenticated to access these endpoints.
 router.post("/food", authenticate, upload.single("image"), scanFoodImage);
 router.post("/barcode", authenticate, scanBarcode);
 router.post("/menu", authenticate, upload.single("image"), scanMenuImage);

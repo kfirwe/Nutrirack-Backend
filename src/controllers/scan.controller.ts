@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import {
-  callGeminiAPI,
+  getGeminiRecommendation,
   callOCR,
   findOrCreateFood
 } from "../helpers/scan.helpers";
@@ -144,15 +144,6 @@ const extractMenuText = async (image: Express.Multer.File) => {
   return menuText;
 };
 
-const getUser = async (req: Request) => {
-  const userId = (req.user as { id: string })?.id;
-  const user = await getUserById(userId);
-  if (!user) {
-    throw new Error("User not found.");
-  }
-  return user;
-};
-
 const getTodayMeals = async (userId: string) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -213,7 +204,7 @@ export const scanMenuImage = async (
 
     console.log("🥗 User's Remaining Nutritional Needs:", userNutritionalNeeds);
 
-    const aiRecommendation = await callGeminiAPI(
+    const aiRecommendation = await getGeminiRecommendation(
       menuText,
       userNutritionalNeeds,
       mealTime
