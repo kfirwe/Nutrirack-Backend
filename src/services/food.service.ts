@@ -1,6 +1,7 @@
 import axios from "axios";
-import Food from "../models/Food.model";
+import Food, { IFood } from "../models/Food.model";
 import { callGeminiAPI } from "../api/gemini.api";
+import { NutritionDetails } from "../types/nutrition.types";
 
 export const findMatchingFoods = async (searchQuery: string) => {
     const foods = await Food.find({
@@ -60,3 +61,43 @@ export async function estimateNutritionsValues(foodName: any) {
 
     return message;
 }
+
+
+export const createNewFood = async (
+  name: string,
+  nutritionDetails: NutritionDetails
+): Promise<IFood> => {
+  const newFood = new Food({ name, nutritionDetails });
+  await newFood.save();
+  return newFood;
+};
+
+
+const findFoodByNameAndNutrition = async (
+    name: string,
+    nutritionDetails: NutritionDetails
+  ): Promise<IFood | null> => {
+    return await Food.findOne({
+      name,
+      "nutritionDetails.cals": nutritionDetails.cals,
+      "nutritionDetails.protein": nutritionDetails.protein,
+      "nutritionDetails.carbs": nutritionDetails.carbs,
+      "nutritionDetails.fat": nutritionDetails.fat,
+    });
+  };
+  
+  
+  
+  export const findOrCreateFood = async (
+    name: string,
+    nutritionDetails: NutritionDetails
+  ): Promise<IFood> => {
+  
+    const existingFood = await findFoodByNameAndNutrition(name, nutritionDetails);
+  
+    if (existingFood) {
+      return existingFood;
+    }
+  
+    return await createNewFood(name, nutritionDetails);
+  };

@@ -1,12 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import {
-  getGeminiRecommendation,
   callOCR,
-  findOrCreateFood
+  getGeminiRecommendation,
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
-import User from "../models/User.model";
+import { findOrCreateFood } from "../services/food.service";
 import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
 import { getUserById } from "../services/user.service";
 

@@ -1,5 +1,6 @@
-import { findOrCreateFood, parseNutritionDetails } from "../helpers/scan.helpers";
+import { parseNutritionDetails } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
+import { findOrCreateFood } from "./food.service";
 
 export const getMealHistories = async (userId: string) => {
     return MealHistory.find({ userId })

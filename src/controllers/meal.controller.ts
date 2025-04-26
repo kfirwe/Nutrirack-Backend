@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
-import {
-  findOrCreateFood,
-  parseNutritionDetails
-} from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
+import { findOrCreateFood } from "../services/food.service";
 import { addRecentFoodService, getRecentFoodsService } from "../services/meal.service";
 import { getUserById } from "../services/user.service";
 
@@ -43,7 +40,7 @@ export const addManualFood = async (req: Request, res: Response) => {
   try {
     const { name, nutritionDetails } = req.body;
 
-    const newFood = await findOrCreateFood("NOT_REAL_IGNORE", nutritionDetails);
+    const newFood = await findOrCreateFood(name, nutritionDetails);
 
     await MealHistory.create({
       userId: (req.user as { id: string })?.id,
