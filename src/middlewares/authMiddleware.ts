@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
 import User from "../models/User.model";
+import { getUserById } from "../services/user.service";
 
 export const authenticate = async (
   req: Request,
@@ -34,7 +35,7 @@ export const authenticate = async (
       return;
     }
 
-    const user = await User.findById(userId);
+    const user = await getUserById(userId);
     if (!user) {
       res.status(StatusCodes.NOT_FOUND).json({ message: "User not found" });
       return;

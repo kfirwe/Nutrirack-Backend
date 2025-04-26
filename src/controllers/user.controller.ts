@@ -18,7 +18,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await User.findById(userId);
+    const user = await getUserById(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -130,7 +130,7 @@ export const updateUserMacroGoals = async (req: Request, res: Response) => {
       return;
     }
 
-    const user = await User.findById(userId);
+    const user = await getUserById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return
