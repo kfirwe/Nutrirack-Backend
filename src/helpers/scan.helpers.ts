@@ -2,10 +2,7 @@ import dotenv from "dotenv";
 import sharp from "sharp";
 import Tesseract from "tesseract.js";
 import { callGeminiAPI } from "../api/gemini.api";
-import Food, { IFood } from "../models/Food.model";
-import { NutritionDetails } from "../types/nutrition.types";
 import { OCRImage, TesseractResult } from "../types/scan.types";
-import { createNewFood } from "../services/food.service";
 
 dotenv.config();
 

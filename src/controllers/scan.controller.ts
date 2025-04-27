@@ -8,15 +8,14 @@ import MealHistory from "../models/MealHostory.model";
 import { findOrCreateFood } from "../services/food.service";
 import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
 import { getUserById } from "../services/user.service";
+import { createMealHistory } from "../services/meal.service";
 
-// Endpoint for processing a food image
 export const scanFoodImage = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // Assume an image file is uploaded (using middleware like multer)
     const image = req.file;
     if (!image) {
       res.status(400).json({ error: "No image provided" });
@@ -45,15 +44,7 @@ export const scanFoodImage = async (
       nutritionData.nutrition
     );
 
-    // Save the meal history to the database
-    const newMealHistory = new MealHistory({
-      userId: (req.user as { id: string })?.id,
-      name: nutritionData.foodName,
-      date: new Date(),
-      ingredients: [newFood._id],
-      nutritionDetails: nutritionData.nutrition,
-    });
-    await newMealHistory.save();
+    createMealHistory((req.user as { id: string })?.id, nutritionData.foodName, [newFood._id], nutritionData.nutrition);
 
     res.status(200).json(nutritionData);
   } catch (error) {
@@ -61,7 +52,6 @@ export const scanFoodImage = async (
   }
 };
 
-// Endpoint for processing a barcode
 export const scanBarcode = async (
   req: Request,
   res: Response,
@@ -108,21 +98,12 @@ export const scanBarcode = async (
 
     console.log("📌 Final Nutrition:", logMealNutrition);
 
-    // Use the helper function to find or create the food
     const newFood = await findOrCreateFood(
       logMealNutrition.foodName,
       logMealNutrition.nutrition
     );
 
-    // Save the meal history to the database
-    const newMealHistory = new MealHistory({
-      userId: (req.user as { id: string })?.id,
-      name: logMealNutrition.foodName,
-      date: new Date(),
-      ingredients: [newFood._id],
-      nutritionDetails: logMealNutrition.nutrition,
-    });
-    await newMealHistory.save();
+    createMealHistory((req.user as { id: string })?.id, logMealNutrition.foodName, [newFood._id], logMealNutrition.nutrition);
 
     // ✅ Step 4: Return Nutrition Data
     res.status(200).json({ barcode, ...logMealNutrition });

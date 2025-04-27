@@ -2,9 +2,9 @@ import axios from "axios";
 import FormData from "form-data";
 import { resizeImage } from "../helpers/scan.helpers";
 import { RecognitionResult, USDAFoodNutrient, USDANutrition } from "../types/nutrition.types";
+import { uploadFoodImageToLogMeal } from "../api/logmeal.api";
 
-const LOGMEAL_API_URL =
-    "https://api.logmeal.com/v2/image/segmentation/complete/v1.0";
+
 const LOGMEAL_BARCODE_API_URL = "https://api.logmeal.com/v2/barcode_scan";
 const LOGMEAL_API_KEY = process.env.LOGMEAL_API_KEY;
 const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
@@ -28,14 +28,8 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
 
         const compressedBuffer = await resizeImage(imageFile.buffer);
         const formData = prepareFormData(imageFile, compressedBuffer);
+        const response = await uploadFoodImageToLogMeal(formData);
 
-        //  Step 1: Send Image to LogMeal API
-        const response = await axios.post(LOGMEAL_API_URL, formData, {
-            headers: {
-                Authorization: `Bearer ${LOGMEAL_API_KEY}`,
-                ...formData.getHeaders(), // Automatically sets multipart headers
-            },
-        });
 
         console.log("LogMeal Response:", response.data);
 
@@ -131,7 +125,6 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
             }
         }
 
-        //  Return Final Data
         return { foodName, nutrition };
     } catch (error) {
         console.error(

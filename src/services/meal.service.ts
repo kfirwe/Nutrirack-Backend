@@ -34,6 +34,19 @@ export const getMealHistories = async (userId: string) => {
     return Array.from(uniqueFoodsMap.values());
   };
 
+  export const createMealHistory = async (userId: string, mealName: string, ingredients: any, nutritionDetails: any) => { 
+
+    const newMealHistory = new MealHistory({
+      userId,
+      name: mealName,
+      date: new Date(),
+      ingredients,
+      nutritionDetails: nutritionDetails,
+    });
+    await newMealHistory.save();
+    return newMealHistory;
+  }
+
 
   export const addRecentFoodService = async (userId: string, foodName: string, details: any) => {
     const food = await findOrCreateFood(
