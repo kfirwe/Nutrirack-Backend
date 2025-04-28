@@ -26,7 +26,6 @@ const FoodSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Custom validation: Ensure at least one nutrition field is provided
 FoodSchema.pre<IFood>("validate", function (next) {
   const { cals, protein, carbs, fat } = this.nutritionDetails || {};
   if (!cals && !protein && !carbs && !fat) {
@@ -39,7 +38,6 @@ FoodSchema.pre<IFood>("validate", function (next) {
   next();
 });
 
-// ✅ Pre-save hook to set default values if any field is missing
 FoodSchema.pre<IFood>("save", function (next) {
   this.nutritionDetails = {
     cals: this.nutritionDetails.cals ?? 0,

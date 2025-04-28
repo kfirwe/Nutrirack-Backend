@@ -14,13 +14,12 @@ import {
 import { authenticate } from "../middlewares/authMiddleware";
 
 const router = Router();
-const storage = multer.memoryStorage(); // Store file in memory
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// Protected routes: the user must be authenticated to access these endpoints.
 router.post("/food", authenticate, upload.single("image"), scanFoodImage);
 router.post("/barcode", authenticate, scanBarcode);
 router.post("/menu", authenticate, upload.single("image"), scanMenuImage);
