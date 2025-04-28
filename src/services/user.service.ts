@@ -19,7 +19,16 @@ export const calculateTotalMacros = (meals: any[]): Macros => {
 };
 
 export const getUserById = async (userId: string) => {
-  return await User.findById(userId);
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found.");
+    }
+    return user;
+  } catch (error) {
+    console.error(`Failed to fetch user with ID ${userId}:`, error);
+    throw new Error("Error fetching user.");
+  }
 };
 
 export const getUserMacrosToday = async (userId: string) => {
@@ -36,7 +45,7 @@ export const getUserMacrosToday = async (userId: string) => {
 };
 
 export const fetchUserMacrosGoals = async (userId: string) => {
-  const user = await User.findById(userId);
+  const user = await getUserById(userId);
   if (!user) throw new Error("User not found");
 
   const { goals } = user;
