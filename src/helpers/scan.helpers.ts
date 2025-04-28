@@ -25,7 +25,7 @@ export const getGeminiRecommendation = async (
   },
   mealTime: string
 ) => {
-  console.log("📡 Sending request to Gemini API...");
+  console.log("Sending request to Gemini API...");
 
   const prompt = `
     You are an expert nutrition assistant. A user is selecting a meal from the following menu:
@@ -58,13 +58,13 @@ export const getGeminiRecommendation = async (
     return "Could not generate a meal recommendation.";
   }
 
-  console.log("✅ Gemini Response:", message);
+  console.log("Gemini Response:", message);
   return message;
 };
 
 export const callOCR = async (image: OCRImage): Promise<string> => {
   try {
-    console.log("🔍 Processing Image for OCR:", image.originalname);
+    console.log("Processing Image for OCR:", image.originalname);
 
     const {
       data: { text },
@@ -72,7 +72,7 @@ export const callOCR = async (image: OCRImage): Promise<string> => {
       logger: (m: any) => console.log("Tesseract Log:", m),
     });
 
-    console.log("📜 Extracted Menu Text:", text);
+    console.log("Extracted Menu Text:", text);
     return text;
   } catch (error) {
     console.error("❌ Tesseract OCR Error:", error);
@@ -86,22 +86,18 @@ export const parseNutritionDetails = (details: string) => {
   );
   return match
     ? {
-      cals: parseFloat(match[1]),
-      protein: parseFloat(match[3]),
-      carbs: parseFloat(match[5]),
-      fat: parseFloat(match[7]),
-    }
-    : { cals: 0, protein: 0, carbs: 0, fat: 0 }; 
+        cals: parseFloat(match[1]),
+        protein: parseFloat(match[3]),
+        carbs: parseFloat(match[5]),
+        fat: parseFloat(match[7]),
+      }
+    : { cals: 0, protein: 0, carbs: 0, fat: 0 };
 };
-
-
-
 
 export const findOrCreateFood = async (
   name: string,
   nutritionDetails: NutritionDetails
 ): Promise<IFood> => {
-  // Check if the food with the exact name and nutrition values already exists
   const existingFood = await Food.findOne({
     name,
     "nutritionDetails.cals": nutritionDetails.cals,
@@ -114,7 +110,6 @@ export const findOrCreateFood = async (
     return existingFood;
   }
 
-  // Create a new food if it doesn't exist
   const newFood = new Food({
     name,
     nutritionDetails,

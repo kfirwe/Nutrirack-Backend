@@ -3,21 +3,23 @@ import mongoose from "mongoose";
 import {
   getGeminiRecommendation,
   callOCR,
-  findOrCreateFood
+  findOrCreateFood,
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
 import User from "../models/User.model";
-import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
+import {
+  callLogmealAPI,
+  callLogmealBarcodeAPI,
+  callUSDADatasetAPI,
+} from "../services/scan.service";
 import { getUserById } from "../services/user.service";
 
-// Endpoint for processing a food image
 export const scanFoodImage = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // Assume an image file is uploaded (using middleware like multer)
     const image = req.file;
     if (!image) {
       res.status(400).json({ error: "No image provided" });
@@ -29,7 +31,6 @@ export const scanFoodImage = async (
     }
 
     const nutritionData = await callLogmealAPI(image);
-    console.log(nutritionData);
 
     if ("error" in nutritionData) {
       res.status(500).json({ error: nutritionData["error"] });
@@ -46,7 +47,6 @@ export const scanFoodImage = async (
       nutritionData.nutrition
     );
 
-    // Save the meal history to the database
     const newMealHistory = new MealHistory({
       userId: (req.user as { id: string })?.id,
       name: nutritionData.foodName,
@@ -62,7 +62,6 @@ export const scanFoodImage = async (
   }
 };
 
-// Endpoint for processing a barcode
 export const scanBarcode = async (
   req: Request,
   res: Response,
@@ -75,23 +74,20 @@ export const scanBarcode = async (
       return;
     }
 
-    console.log("📌 Scanning Barcode:", barcode);
+    console.log("Scanning Barcode:", barcode);
 
-    // ✅ Step 1: Get Nutrition from LogMeal API
     const logMealNutrition: { [key: string]: any } =
       await callLogmealBarcodeAPI(barcode);
-    console.log("📌 LogMeal Nutrition:", logMealNutrition);
+    console.log("LogMeal Nutrition:", logMealNutrition);
 
-    // ✅ Step 2: If missing values, fetch from USDA API
     if (Object.values(logMealNutrition.nutrition).includes(null)) {
-      console.log("📌 Fetching missing values from USDA...");
+      console.log("Fetching missing values from USDA...");
       const usdaNutrition: { [key: string]: any } = await callUSDADatasetAPI(
         barcode
       );
-      console.log("📌 USDA Nutrition:", usdaNutrition);
-      console.log("📌 LogMeal Nutrition:", logMealNutrition);
+      console.log("USDA Nutrition:", usdaNutrition);
+      console.log("LogMeal Nutrition:", logMealNutrition);
 
-      // ✅ Step 3: Average Values if both sources provide data
       for (const key in logMealNutrition.nutrition) {
         if (key && key in usdaNutrition) {
           if (
@@ -107,15 +103,13 @@ export const scanBarcode = async (
       }
     }
 
-    console.log("📌 Final Nutrition:", logMealNutrition);
+    console.log("Final Nutrition:", logMealNutrition);
 
-    // Use the helper function to find or create the food
     const newFood = await findOrCreateFood(
       logMealNutrition.foodName,
       logMealNutrition.nutrition
     );
 
-    // Save the meal history to the database
     const newMealHistory = new MealHistory({
       userId: (req.user as { id: string })?.id,
       name: logMealNutrition.foodName,
@@ -125,7 +119,6 @@ export const scanBarcode = async (
     });
     await newMealHistory.save();
 
-    // ✅ Step 4: Return Nutrition Data
     res.status(200).json({ barcode, ...logMealNutrition });
   } catch (error) {
     console.error("❌ Error in scanBarcode:", error);
@@ -133,14 +126,13 @@ export const scanBarcode = async (
   }
 };
 
-
 const extractMenuText = async (image: Express.Multer.File) => {
-  console.log("📸 Processing Menu Image...");
+  console.log("Processing Menu Image...");
   const menuText = await callOCR(image);
   if (!menuText) {
     throw new Error("Failed to extract menu text.");
   }
-  console.log("📄 Extracted Menu Text:", menuText);
+  console.log("Extracted Menu Text:", menuText);
   return menuText;
 };
 
@@ -157,7 +149,10 @@ const getTodayMeals = async (userId: string) => {
 };
 
 const calculateRemainingGoals = (user: any, meals: any[]) => {
-  let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+  let totalCalories = 0,
+    totalProtein = 0,
+    totalCarbs = 0,
+    totalFat = 0;
 
   meals.forEach((meal) => {
     totalCalories += meal.nutritionDetails.cals || 0;
@@ -202,7 +197,7 @@ export const scanMenuImage = async (
     const userNutritionalNeeds = calculateRemainingGoals(user, meals);
     const mealTime = getMealTime();
 
-    console.log("🥗 User's Remaining Nutritional Needs:", userNutritionalNeeds);
+    console.log("User's Remaining Nutritional Needs:", userNutritionalNeeds);
 
     const aiRecommendation = await getGeminiRecommendation(
       menuText,
@@ -210,7 +205,7 @@ export const scanMenuImage = async (
       mealTime
     );
 
-    console.log("🔮 AI Recommended Meal:", aiRecommendation);
+    console.log("AI Recommended Meal:", aiRecommendation);
 
     res.status(200).json({
       menuText,
