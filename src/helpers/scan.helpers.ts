@@ -25,7 +25,7 @@ export const getGeminiRecommendation = async (
   },
   mealTime: string
 ) => {
-  console.log("📡 Sending request to Gemini API...");
+  console.log("Sending request to Gemini API...");
 
   const prompt = `
     You are an expert nutrition assistant. A user is selecting a meal from the following menu:
@@ -58,7 +58,7 @@ export const getGeminiRecommendation = async (
     return "Could not generate a meal recommendation.";
   }
 
-  console.log("✅ Gemini Response:", message);
+  console.log("Gemini Response:", message);
   return message;
 };
 
