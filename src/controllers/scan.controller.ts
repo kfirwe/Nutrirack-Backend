@@ -82,9 +82,13 @@ export const scanBarcode = async (
 
     if (Object.values(logMealNutrition.nutrition).includes(null)) {
       console.log("Fetching missing values from USDA...");
-      const usdaNutrition: { [key: string]: any } = await callUSDADatasetAPI(
+      const usdaNutritionMap: { [key: string]: any } = await callUSDADatasetAPI(
         barcode
       );
+      const usdaNutrition = usdaNutritionMap.nutrition;
+      if (!logMealNutrition.foodName && usdaNutritionMap.name) {
+        logMealNutrition.foodName = usdaNutritionMap.name;
+      }
       console.log("USDA Nutrition:", usdaNutrition);
       console.log("LogMeal Nutrition:", logMealNutrition);
 
@@ -121,7 +125,7 @@ export const scanBarcode = async (
 
     res.status(200).json({ barcode, ...logMealNutrition });
   } catch (error) {
-    console.error("❌ Error in scanBarcode:", error);
+    console.error("Error in scanBarcode:", error);
     next(error);
   }
 };
@@ -213,7 +217,7 @@ export const scanMenuImage = async (
       userNutritionalNeeds,
     });
   } catch (error) {
-    console.error("❌ Error in scanMenuImage:", error);
+    console.error("Error in scanMenuImage:", error);
     next(error);
   }
 };

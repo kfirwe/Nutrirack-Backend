@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import {
   findOrCreateFood,
-  parseNutritionDetails
+  parseNutritionDetails,
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
-import { addRecentFoodService, getRecentFoodsService } from "../services/meal.service";
+import {
+  addRecentFoodService,
+  getRecentFoodsService,
+} from "../services/meal.service";
 import { getUserById } from "../services/user.service";
-
 
 export const recentFoods = async (req: Request, res: Response) => {
   try {
@@ -19,7 +21,6 @@ export const recentFoods = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch recent foods" });
   }
 };
-
 
 export const addRecentFood = async (req: Request, res: Response) => {
   try {
@@ -34,7 +35,7 @@ export const addRecentFood = async (req: Request, res: Response) => {
 
     res.status(200).json({ success: true, message: "Food added!" });
   } catch (error) {
-    console.error("❌ Error adding food to history:", error);
+    console.error("Error adding food to history:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -62,12 +63,9 @@ export const addManualFood = async (req: Request, res: Response) => {
   }
 };
 
-
-// ✅ API to Check if User Reached Their Goals
 export const CheckGoals = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
-
 
     const today = new Date();
     const year = today.getFullYear();
@@ -75,21 +73,19 @@ export const CheckGoals = async (req: Request, res: Response) => {
     const day = today.getDate();
 
     console.log(
-      `📅 Checking goals for user: ${userId} on ${year}-${month + 1}-${day}`
+      `Checking goals for user: ${userId} on ${year}-${month + 1}-${day}`
     );
 
-    // ✅ Fetch all meals for today & populate food ingredients
     const mealsToday = await MealHistory.find({
       userId,
       date: {
-        $gte: new Date(year, month, day, 0, 0, 0), // Start of day
-        $lt: new Date(year, month, day, 23, 59, 59), // End of day
+        $gte: new Date(year, month, day, 0, 0, 0),
+        $lt: new Date(year, month, day, 23, 59, 59),
       },
     }).populate("ingredients");
 
-    console.log(`🍽️ Found ${mealsToday.length} meals today.`);
+    console.log(`Found ${mealsToday.length} meals today.`);
 
-    // ✅ Sum Nutrition Values for Today
     let totalCals = 0,
       totalProtein = 0,
       totalCarbs = 0,
@@ -105,7 +101,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
     });
 
     console.log(
-      `📊 Total Today: Cals: ${totalCals}, Protein: ${totalProtein}, Carbs: ${totalCarbs}, Fat: ${totalFat}`
+      `Total Today: Cals: ${totalCals}, Protein: ${totalProtein}, Carbs: ${totalCarbs}, Fat: ${totalFat}`
     );
 
     const user = await getUserById(userId);
@@ -117,7 +113,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
 
     const { calories, protein, carbs, fat } = user.goals || {};
     console.log(
-      `🎯 User Goals: Cals: ${calories}, Protein: ${protein}, Carbs: ${carbs}, Fat: ${fat}`
+      `User Goals: Cals: ${calories}, Protein: ${protein}, Carbs: ${carbs}, Fat: ${fat}`
     );
 
     const reachedGoals = [];
@@ -129,7 +125,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
 
     let message = "";
     if (reachedGoals.length === 0) {
-      res.status(200).json({ message: "NO_GOALS_REACHED" }); 
+      res.status(200).json({ message: "NO_GOALS_REACHED" });
       return;
     } else if (reachedGoals.length === 4) {
       message = "🎉 All nutrition goals reached! Great job! 🎯";
@@ -139,10 +135,10 @@ export const CheckGoals = async (req: Request, res: Response) => {
       )} goal(s)! Keep going!`;
     }
 
-    console.log("📢 Goal Message:", message);
+    console.log("Goal Message:", message);
     res.status(200).json({ message });
   } catch (error) {
-    console.error("❌ Error checking goals:", error);
+    console.error("Error checking goals:", error);
     res.status(500).json({ error: "Failed to check goals." });
   }
 };

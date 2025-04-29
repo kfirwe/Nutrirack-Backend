@@ -54,7 +54,7 @@ export const getGeminiRecommendation = async (
   const { success, message } = await callGeminiAPI(prompt);
 
   if (!success) {
-    console.error("❌ Gemini API Error: Failed to get recommendation.");
+    console.error("Gemini API Error: Failed to get recommendation.");
     return "Could not generate a meal recommendation.";
   }
 
@@ -75,7 +75,7 @@ export const callOCR = async (image: OCRImage): Promise<string> => {
     console.log("Extracted Menu Text:", text);
     return text;
   } catch (error) {
-    console.error("❌ Tesseract OCR Error:", error);
+    console.error("Tesseract OCR Error:", error);
     return "OCR failed to extract text";
   }
 };
