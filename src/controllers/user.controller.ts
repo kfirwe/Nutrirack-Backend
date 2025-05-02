@@ -2,12 +2,15 @@ import { Request, Response } from "express";
 import User from "../models/User.model";
 import { calculateMacros } from "../services/calculateMacros";
 import {
+  findGraphCompletions,
+  findMealTimesData,
+  findNutrientGoalAchievementGraph,
   findUserById,
-  findUserMacrosGoals,
   findUserMacrosToday,
+  findUserMacrosGoals
 } from "../services/user.service";
 
-export const setupUserMacrosAndGoals = async (req: Request, res: Response) => {
+export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { height, weight, goalWeight, age, gender, activityLevel } = req.body;
 
@@ -17,14 +20,21 @@ export const setupUserMacrosAndGoals = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await User.findById(userId);
+    const user = await findUserById(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const macros = calculateMacros({ age, gender, height, weight, goalWeight, activityLevel });
+    const macros = calculateMacros({
+      age,
+      gender,
+      height,
+      weight,
+      goalWeight,
+      activityLevel,
+    });
 
     Object.assign(user, {
       height,
@@ -173,34 +183,118 @@ export const updateUserMacroGoals = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       res.status(401).json({ message: "Unauthorized" });
-      return
+      return;
     }
 
     const userId = (req.user as { id: string })?.id;
     const { calories, protein, carbs, fat } = req.body;
 
-    if (
-      calories == null ||
-      protein == null ||
-      carbs == null ||
-      fat == null
-    ) {
+    if (calories == null || protein == null || carbs == null || fat == null) {
       res.status(400).json({ message: "All macro fields are required." });
       return;
     }
 
-    const user = await User.findById(userId);
+    const user = await findUserById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
-      return
+      return;
     }
 
     user.goals = { calories, protein, carbs, fat };
     await user.save();
 
-    res.status(200).json({ message: "Goals updated successfully", goals: user.goals });
+    res
+      .status(200)
+      .json({ message: "Goals updated successfully", goals: user.goals });
   } catch (error) {
     console.error("Error updating user goals:", error);
     res.status(500).json({ message: "Failed to update goals" });
+  }
+};
+
+export const getGraphCompletions = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate } = req.query;
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+    }
+    const result = await findGraphCompletions(
+      userId as string,
+      startDate as string,
+      endDate as string,
+      user
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching goal completion data:", error);
+    res.status(500).json({ error: "Failed to get the user graph completions" });
+  }
+};
+
+export const fetchNutrientGoalAchievement = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { userId } = req.params;
+    const { nutrient, period } = req.query;
+    if (
+      period !== "1 week" &&
+      period !== "1 month" &&
+      period !== "3 month" &&
+      period !== "6 month" &&
+      period !== "1 year"
+    ) {
+      res.status(400).json({ error: "Invalid period type" });
+      return;
+    }
+    if (
+      nutrient !== "calories" &&
+      (period as "1 week" | "1 month" | "3 month" | "6 month" | "1 year") &&
+      nutrient !== "carbs" &&
+      nutrient !== "fat" &&
+      nutrient !== "protein"
+    ) {
+      res.status(400).json({ error: "Invalid nutrient type" });
+      return;
+    }
+    const result = await findNutrientGoalAchievementGraph(
+      userId,
+      nutrient as "calories" | "protein" | "carbs" | "fat",
+      period
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching nutrient data for graph:", error);
+    res.status(500).json({ error: "Failed to get the user graph completions" });
+  }
+};
+
+export const fetchMealTimesDataController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({ error: "Invalid userId" });
+      return;
+    }
+
+    const result = await findMealTimesData(
+      userId,
+      startDate as string,
+      endDate as string
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching meal times data:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to get the user meal times graph data" });
   }
 };
