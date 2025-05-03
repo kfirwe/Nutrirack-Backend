@@ -7,6 +7,7 @@ import MealHistory from "../models/MealHostory.model";
 import {
   addRecentFoodService,
   getRecentFoodsService,
+  getMealsByDateService,
 } from "../services/meal.service";
 import { getUserById } from "../services/user.service";
 
@@ -140,5 +141,23 @@ export const CheckGoals = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error checking goals:", error);
     res.status(500).json({ error: "Failed to check goals." });
+  }
+};
+
+export const getMealsByDate = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { date } = req.query;
+
+    if (!date || typeof date !== "string") {
+      res.status(400).json({ error: "Date query parameter is required" });
+      return;
+    }
+
+    const meals = await getMealsByDateService(userId, date);
+    res.status(200).json({ meals });
+  } catch (error) {
+    console.error("Error fetching meals by date:", error);
+    res.status(500).json({ error: "Failed to fetch meals" });
   }
 };
