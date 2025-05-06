@@ -50,3 +50,20 @@ export const getMealHistories = async (userId: string) => {
   
     await newMeal.save();
   };
+
+export const getMealsByDateService = async (userId: string, dateStr: string) => {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  return MealHistory.find({
+    userId,
+    date: {
+      $gte: new Date(year, month, day, 0, 0, 0),
+      $lt: new Date(year, month, day, 23, 59, 59),
+    },
+  })
+    .sort({ createdAt: -1 })
+    .populate("ingredients");
+};
