@@ -18,6 +18,7 @@ export interface IUser extends Document {
     fat: number;
   };
   lastLogin: Date;
+  profilePicture: string;
 }
 
 const UserSchema: Schema = new Schema(
@@ -40,6 +41,10 @@ const UserSchema: Schema = new Schema(
       type: { type: String, required: false },
     },
     lastLogin: { type: Date, required: false },
+    profilePicture: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );

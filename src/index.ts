@@ -38,14 +38,18 @@ app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
 
-mongoose
-  .connect(process.env.MONGO_URI || "")
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, HOST, () => {
-      console.log(`Server running on port ${PORT}`);
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGO_URI || "")
+    .then(() => {
+      console.log("Connected to MongoDB");
+      app.listen(PORT, HOST, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Error connecting to MongoDB", err);
     });
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB", err);
-  });
+}
+
+export default app;

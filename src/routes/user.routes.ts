@@ -9,6 +9,7 @@ import {
   getGraphCompletions,
   fetchNutrientGoalAchievement,
   fetchMealTimesDataController,
+  updateProfilePicture,
 } from "../controllers/user.controller";
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.get(
   fetchNutrientGoalAchievement
 );
 router.get("/meal-times/:userId", authenticate, fetchMealTimesDataController);
+router.put("/profile-picture", authenticate, updateProfilePicture);
 
 export default router;
