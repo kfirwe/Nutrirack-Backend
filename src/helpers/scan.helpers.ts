@@ -2,8 +2,6 @@ import dotenv from "dotenv";
 import sharp from "sharp";
 import Tesseract from "tesseract.js";
 import { callGeminiAPI } from "../api/gemini.api";
-import Food, { IFood } from "../models/Food.model";
-import { NutritionDetails } from "../types/nutrition.types";
 import { OCRImage, TesseractResult } from "../types/scan.types";
 
 dotenv.config();
@@ -92,29 +90,4 @@ export const parseNutritionDetails = (details: string) => {
         fat: parseFloat(match[7]),
       }
     : { cals: 0, protein: 0, carbs: 0, fat: 0 };
-};
-
-export const findOrCreateFood = async (
-  name: string,
-  nutritionDetails: NutritionDetails
-): Promise<IFood> => {
-  const existingFood = await Food.findOne({
-    name,
-    "nutritionDetails.cals": nutritionDetails.cals,
-    "nutritionDetails.protein": nutritionDetails.protein,
-    "nutritionDetails.carbs": nutritionDetails.carbs,
-    "nutritionDetails.fat": nutritionDetails.fat,
-  });
-
-  if (existingFood) {
-    return existingFood;
-  }
-
-  const newFood = new Food({
-    name,
-    nutritionDetails,
-  });
-
-  await newFood.save();
-  return newFood;
 };

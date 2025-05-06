@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import {
-  findOrCreateFood,
-  parseNutritionDetails,
-} from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
+import { findOrCreateFood } from "../services/food.service";
 import {
   addRecentFoodService,
+  getMealsByDateService,
   getRecentFoodsService,
 } from "../services/meal.service";
 import { findUserById } from "../services/user.service";
@@ -44,7 +42,7 @@ export const addManualFood = async (req: Request, res: Response) => {
   try {
     const { name, nutritionDetails } = req.body;
 
-    const newFood = await findOrCreateFood("NOT_REAL_IGNORE", nutritionDetails);
+    const newFood = await findOrCreateFood(name, nutritionDetails);
 
     await MealHistory.create({
       userId: (req.user as { id: string })?.id,
@@ -140,5 +138,23 @@ export const CheckGoals = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error checking goals:", error);
     res.status(500).json({ error: "Failed to check goals." });
+  }
+};
+
+export const getMealsByDate = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { date } = req.query;
+
+    if (!date || typeof date !== "string") {
+      res.status(400).json({ error: "Date query parameter is required" });
+      return;
+    }
+
+    const meals = await getMealsByDateService(userId, date);
+    res.status(200).json({ meals });
+  } catch (error) {
+    console.error("Error fetching meals by date:", error);
+    res.status(500).json({ error: "Failed to fetch meals" });
   }
 };
