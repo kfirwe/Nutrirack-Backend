@@ -15,7 +15,7 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, goals } = req.body;
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
@@ -25,7 +25,7 @@ export const registerUser = async (
       return;
     }
 
-    const newUser = await registerUserService(name, email, password);
+    const newUser = await registerUserService(name, email, password, goals);
 
     res.status(StatusCodes.CREATED).json({
       message: "User registered successfully",
