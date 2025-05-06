@@ -8,8 +8,6 @@ import {
 } from "../types/nutrition.types";
 import { uploadFoodImageToLogMeal } from "../api/logmeal.api";
 
-const LOGMEAL_API_URL =
-    "https://api.logmeal.com/v2/image/segmentation/complete/v1.0";
 const LOGMEAL_BARCODE_API_URL = "https://api.logmeal.com/v2/barcode_scan";
 const LOGMEAL_API_KEY = process.env.LOGMEAL_API_KEY;
 const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
