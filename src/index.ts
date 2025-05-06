@@ -10,6 +10,7 @@ import scanRoutes from "./routes/scan.routes";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import chatRoutes from "./routes/chat.routes";
+import historyRoutes from "./routes/history.routes";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ app.use("/scan", scanRoutes);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/chat", chatRoutes);
-
+app.use("/history", historyRoutes);
 app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
