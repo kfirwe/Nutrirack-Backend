@@ -1,17 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import {
-  getGeminiRecommendation,
   callOCR,
-  findOrCreateFood,
+  getGeminiRecommendation,
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
-import User from "../models/User.model";
-import {
-  callLogmealAPI,
-  callLogmealBarcodeAPI,
-  callUSDADatasetAPI,
-} from "../services/scan.service";
+import { findOrCreateFood } from "../services/food.service";
+import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
+import { createMealHistory } from "../services/meal.service";
 import { getUserById } from "../services/user.service";
 
 export const scanFoodImage = async (
@@ -47,14 +43,7 @@ export const scanFoodImage = async (
       nutritionData.nutrition
     );
 
-    const newMealHistory = new MealHistory({
-      userId: (req.user as { id: string })?.id,
-      name: nutritionData.foodName,
-      date: new Date(),
-      ingredients: [newFood._id],
-      nutritionDetails: nutritionData.nutrition,
-    });
-    await newMealHistory.save();
+    createMealHistory((req.user as { id: string })?.id, nutritionData.foodName, [newFood._id], nutritionData.nutrition);
 
     res.status(200).json(nutritionData);
   } catch (error) {
@@ -114,14 +103,7 @@ export const scanBarcode = async (
       logMealNutrition.nutrition
     );
 
-    const newMealHistory = new MealHistory({
-      userId: (req.user as { id: string })?.id,
-      name: logMealNutrition.foodName,
-      date: new Date(),
-      ingredients: [newFood._id],
-      nutritionDetails: logMealNutrition.nutrition,
-    });
-    await newMealHistory.save();
+    createMealHistory((req.user as { id: string })?.id, logMealNutrition.foodName, [newFood._id], logMealNutrition.nutrition);
 
     res.status(200).json({ barcode, ...logMealNutrition });
   } catch (error) {

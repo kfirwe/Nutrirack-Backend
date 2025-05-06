@@ -1,5 +1,6 @@
-import { findOrCreateFood, parseNutritionDetails } from "../helpers/scan.helpers";
+import { parseNutritionDetails } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
+import { findOrCreateFood } from "./food.service";
 
 export const getMealHistories = async (userId: string) => {
     return MealHistory.find({ userId })
@@ -32,6 +33,19 @@ export const getMealHistories = async (userId: string) => {
   
     return Array.from(uniqueFoodsMap.values());
   };
+
+  export const createMealHistory = async (userId: string, mealName: string, ingredients: any, nutritionDetails: any) => { 
+
+    const newMealHistory = new MealHistory({
+      userId,
+      name: mealName,
+      date: new Date(),
+      ingredients,
+      nutritionDetails: nutritionDetails,
+    });
+    await newMealHistory.save();
+    return newMealHistory;
+  }
 
 
   export const addRecentFoodService = async (userId: string, foodName: string, details: any) => {
