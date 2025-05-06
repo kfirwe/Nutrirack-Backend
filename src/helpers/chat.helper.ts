@@ -2,6 +2,8 @@ import axios from "axios";
 import mongoose from "mongoose";
 import MealHistory from "../models/MealHostory.model";
 import User from "../models/User.model";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const getUserMealHistory = async (userId: string) => {
   try {
@@ -105,7 +107,7 @@ export const generateAIResponse = async (
       `;
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
       { contents: [{ parts: [{ text: prompt }] }] },
       {
         params: { key: process.env.GEMINI_API_KEY },

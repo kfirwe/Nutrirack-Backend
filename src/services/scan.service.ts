@@ -1,16 +1,24 @@
 import axios from "axios";
 import FormData from "form-data";
 import { resizeImage } from "../helpers/scan.helpers";
-import { RecognitionResult, USDAFoodNutrient, USDANutrition } from "../types/nutrition.types";
+import {
+    RecognitionResult,
+    USDAFoodNutrient,
+    USDANutrition,
+} from "../types/nutrition.types";
 import { uploadFoodImageToLogMeal } from "../api/logmeal.api";
 
-
+const LOGMEAL_API_URL =
+    "https://api.logmeal.com/v2/image/segmentation/complete/v1.0";
 const LOGMEAL_BARCODE_API_URL = "https://api.logmeal.com/v2/barcode_scan";
 const LOGMEAL_API_KEY = process.env.LOGMEAL_API_KEY;
 const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
 const USDA_API_KEY = process.env.USDA_API_KEY;
 
-const prepareFormData = (image: Express.Multer.File, compressedBuffer: Buffer) => {
+const prepareFormData = (
+    image: Express.Multer.File,
+    compressedBuffer: Buffer
+) => {
     const formData = new FormData();
     formData.append("image", compressedBuffer, {
         filename: image.originalname || "food.jpg",
@@ -18,7 +26,6 @@ const prepareFormData = (image: Express.Multer.File, compressedBuffer: Buffer) =
     });
     return formData;
 };
-
 
 export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
     try {
@@ -28,12 +35,11 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
 
         const compressedBuffer = await resizeImage(imageFile.buffer);
         const formData = prepareFormData(imageFile, compressedBuffer);
-        const response = await uploadFoodImageToLogMeal(formData);
 
+        const response = await await uploadFoodImageToLogMeal(formData);
 
         console.log("LogMeal Response:", response.data);
 
-        //  Step 2: Extract Recognized Food from `segmentation_results`
         if (
             !response.data.segmentation_results ||
             response.data.segmentation_results.length === 0
@@ -50,18 +56,14 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
             return { message: "Food not recognized in image." };
         }
 
-        //  Step 3: Find Most Probable Food
-
         const mostProbableFood = recognitionResults.reduce(
             (prev: RecognitionResult, curr: RecognitionResult) =>
                 curr.prob > prev.prob ? curr : prev
         );
 
-
         const foodName = mostProbableFood.name;
         console.log("Recognized Food:", foodName);
 
-        //  Step 4: Fetch Nutrition Information from LogMeal
         const nutritionResponse = await axios.post(
             "https://api.logmeal.com/v2/nutrition/recipe/nutritionalInfo",
             { imageId: response.data.imageId },
@@ -85,7 +87,6 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
                 : null,
         };
 
-        //  Step 5: Fetch Missing Nutrition Data from USDA
         if (Object.values(nutrition).includes(null)) {
             const usdaResponse = await axios.get(
                 `${USDA_API_URL}?query=${encodeURIComponent(
@@ -113,7 +114,6 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
                     )?.value || null,
             };
 
-            //  Take the Average if Both Sources Have Values
             for (const key of Object.keys(nutrition) as Array<keyof USDANutrition>) {
                 if (nutrition[key] !== null && usdaNutrition[key] !== null) {
                     nutrition[key] = parseFloat(
@@ -135,8 +135,6 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
     }
 };
 
-
-
 export const callLogmealBarcodeAPI = async (barcode: string) => {
     let foodName = null;
     try {
@@ -144,19 +142,17 @@ export const callLogmealBarcodeAPI = async (barcode: string) => {
             throw new Error("LogMeal API Key is missing. Check your .env file.");
         }
 
-        console.log("📡 Fetching from LogMeal for barcode:", barcode);
-
-        console.log(`${LOGMEAL_BARCODE_API_URL}/${barcode}`);
+        console.log("Fetching from LogMeal for barcode:", barcode);
 
         const response = await axios.post(
             `${LOGMEAL_BARCODE_API_URL}/${barcode}`,
-            null, // <-- Ensures Axios correctly processes headers
+            null,
             {
                 headers: { Authorization: `Bearer ${LOGMEAL_API_KEY}` },
             }
         );
 
-        console.log("📌 LogMeal Response:", response.data);
+        console.log("LogMeal Response:", response.data);
 
         if (!response.data.product_name) {
             throw new Error("Product not found in LogMeal database.");
@@ -165,7 +161,6 @@ export const callLogmealBarcodeAPI = async (barcode: string) => {
         foodName = response.data.product_name;
         const dishId = response.data.dish_id;
 
-        // ✅ Step 2: Fetch Nutrition Data using Dish ID
         const nutritionResponse = await axios.post(
             "https://api.logmeal.com/v2/nutrition/recipe/nutritionalInfo/v1.0/",
             { dish_id: dishId },
@@ -189,11 +184,11 @@ export const callLogmealBarcodeAPI = async (barcode: string) => {
     } catch (error) {
         if (axios.isAxiosError(error)) {
             console.error(
-                "❌ LogMeal Barcode Error:",
+                "LogMeal Barcode Error:",
                 error.response?.data || error.message
             );
         } else {
-            console.error("❌ LogMeal Barcode Error:", error);
+            console.error("LogMeal Barcode Error:", error);
         }
         return {
             foodName,
@@ -202,43 +197,54 @@ export const callLogmealBarcodeAPI = async (barcode: string) => {
     }
 };
 
-
 function extractNutrition(usdaFood: USDAFoodNutrient[]): USDANutrition {
     return {
-        fat: usdaFood.find((n) => n.nutrientName.includes("Total lipid"))?.value || null,
-        carbs: usdaFood.find((n) => n.nutrientName.includes("Carbohydrate"))?.value || null,
-        cals: usdaFood.find((n) => n.nutrientName.includes("Energy"))?.value || null,
-        protein: usdaFood.find((n) => n.nutrientName.includes("Protein"))?.value || null,
+        fat:
+            usdaFood.find((n) => n.nutrientName.includes("Total lipid"))?.value ||
+            null,
+        carbs:
+            usdaFood.find((n) => n.nutrientName.includes("Carbohydrate"))?.value ||
+            null,
+        cals:
+            usdaFood.find((n) => n.nutrientName.includes("Energy"))?.value || null,
+        protein:
+            usdaFood.find((n) => n.nutrientName.includes("Protein"))?.value || null,
     };
 }
 
-// ✅ Function to get nutrition info from USDA API using barcode
 export const callUSDADatasetAPI = async (barcode: string) => {
     try {
         if (!USDA_API_KEY) {
             throw new Error("USDA API Key is missing. Check your .env file.");
         }
 
-        console.log("📡 Fetching from USDA for barcode:", barcode);
+        console.log("Fetching from USDA for barcode:", barcode);
 
         const response = await axios.get(
             `${USDA_API_URL}?query=${barcode}&api_key=${USDA_API_KEY}`
         );
 
-        console.log("📌 USDA Response:", response.data);
+        console.log("USDA Response:", response.data);
 
         const usdaFoodNutrients = response.data.foods?.[0]?.foodNutrients || [];
+        const usdaFoodName = response.data.foods?.[0]?.description || null;
 
-        return extractNutrition(usdaFoodNutrients);
+        return {
+            nutrition: extractNutrition(usdaFoodNutrients),
+            name: usdaFoodName,
+        };
     } catch (error) {
         if (axios.isAxiosError(error)) {
             console.error(
-                "❌ USDA Barcode Error:",
+                "USDA Barcode Error:",
                 error.response?.data || error.message
             );
         } else {
-            console.error("❌ USDA Barcode Error:", error);
+            console.error("USDA Barcode Error:", error);
         }
-        return { fat: null, carbs: null, cals: null, protein: null };
+        return {
+            nutrition: { fat: null, carbs: null, cals: null, protein: null },
+            name: null,
+        };
     }
 };

@@ -23,7 +23,7 @@ export const getGeminiRecommendation = async (
   },
   mealTime: string
 ) => {
-  console.log("📡 Sending request to Gemini API...");
+  console.log("Sending request to Gemini API...");
 
   const prompt = `
     You are an expert nutrition assistant. A user is selecting a meal from the following menu:
@@ -52,17 +52,17 @@ export const getGeminiRecommendation = async (
   const { success, message } = await callGeminiAPI(prompt);
 
   if (!success) {
-    console.error("❌ Gemini API Error: Failed to get recommendation.");
+    console.error("Gemini API Error: Failed to get recommendation.");
     return "Could not generate a meal recommendation.";
   }
 
-  console.log("✅ Gemini Response:", message);
+  console.log("Gemini Response:", message);
   return message;
 };
 
 export const callOCR = async (image: OCRImage): Promise<string> => {
   try {
-    console.log("🔍 Processing Image for OCR:", image.originalname);
+    console.log("Processing Image for OCR:", image.originalname);
 
     const {
       data: { text },
@@ -70,10 +70,10 @@ export const callOCR = async (image: OCRImage): Promise<string> => {
       logger: (m: any) => console.log("Tesseract Log:", m),
     });
 
-    console.log("📜 Extracted Menu Text:", text);
+    console.log("Extracted Menu Text:", text);
     return text;
   } catch (error) {
-    console.error("❌ Tesseract OCR Error:", error);
+    console.error("Tesseract OCR Error:", error);
     return "OCR failed to extract text";
   }
 };
@@ -84,10 +84,10 @@ export const parseNutritionDetails = (details: string) => {
   );
   return match
     ? {
-      cals: parseFloat(match[1]),
-      protein: parseFloat(match[3]),
-      carbs: parseFloat(match[5]),
-      fat: parseFloat(match[7]),
-    }
-    : { cals: 0, protein: 0, carbs: 0, fat: 0 }; 
+        cals: parseFloat(match[1]),
+        protein: parseFloat(match[3]),
+        carbs: parseFloat(match[5]),
+        fat: parseFloat(match[7]),
+      }
+    : { cals: 0, protein: 0, carbs: 0, fat: 0 };
 };

@@ -7,8 +7,8 @@ import {
 import MealHistory from "../models/MealHostory.model";
 import { findOrCreateFood } from "../services/food.service";
 import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
-import { getUserById } from "../services/user.service";
 import { createMealHistory } from "../services/meal.service";
+import { getUserById } from "../services/user.service";
 
 export const scanFoodImage = async (
   req: Request,
@@ -27,7 +27,6 @@ export const scanFoodImage = async (
     }
 
     const nutritionData = await callLogmealAPI(image);
-    console.log(nutritionData);
 
     if ("error" in nutritionData) {
       res.status(500).json({ error: nutritionData["error"] });
@@ -64,23 +63,24 @@ export const scanBarcode = async (
       return;
     }
 
-    console.log("📌 Scanning Barcode:", barcode);
+    console.log("Scanning Barcode:", barcode);
 
-    // ✅ Step 1: Get Nutrition from LogMeal API
     const logMealNutrition: { [key: string]: any } =
       await callLogmealBarcodeAPI(barcode);
-    console.log("📌 LogMeal Nutrition:", logMealNutrition);
+    console.log("LogMeal Nutrition:", logMealNutrition);
 
-    // ✅ Step 2: If missing values, fetch from USDA API
     if (Object.values(logMealNutrition.nutrition).includes(null)) {
-      console.log("📌 Fetching missing values from USDA...");
-      const usdaNutrition: { [key: string]: any } = await callUSDADatasetAPI(
+      console.log("Fetching missing values from USDA...");
+      const usdaNutritionMap: { [key: string]: any } = await callUSDADatasetAPI(
         barcode
       );
-      console.log("📌 USDA Nutrition:", usdaNutrition);
-      console.log("📌 LogMeal Nutrition:", logMealNutrition);
+      const usdaNutrition = usdaNutritionMap.nutrition;
+      if (!logMealNutrition.foodName && usdaNutritionMap.name) {
+        logMealNutrition.foodName = usdaNutritionMap.name;
+      }
+      console.log("USDA Nutrition:", usdaNutrition);
+      console.log("LogMeal Nutrition:", logMealNutrition);
 
-      // ✅ Step 3: Average Values if both sources provide data
       for (const key in logMealNutrition.nutrition) {
         if (key && key in usdaNutrition) {
           if (
@@ -96,7 +96,7 @@ export const scanBarcode = async (
       }
     }
 
-    console.log("📌 Final Nutrition:", logMealNutrition);
+    console.log("Final Nutrition:", logMealNutrition);
 
     const newFood = await findOrCreateFood(
       logMealNutrition.foodName,
@@ -105,22 +105,20 @@ export const scanBarcode = async (
 
     createMealHistory((req.user as { id: string })?.id, logMealNutrition.foodName, [newFood._id], logMealNutrition.nutrition);
 
-    // ✅ Step 4: Return Nutrition Data
     res.status(200).json({ barcode, ...logMealNutrition });
   } catch (error) {
-    console.error("❌ Error in scanBarcode:", error);
+    console.error("Error in scanBarcode:", error);
     next(error);
   }
 };
 
-
 const extractMenuText = async (image: Express.Multer.File) => {
-  console.log("📸 Processing Menu Image...");
+  console.log("Processing Menu Image...");
   const menuText = await callOCR(image);
   if (!menuText) {
     throw new Error("Failed to extract menu text.");
   }
-  console.log("📄 Extracted Menu Text:", menuText);
+  console.log("Extracted Menu Text:", menuText);
   return menuText;
 };
 
@@ -137,7 +135,10 @@ const getTodayMeals = async (userId: string) => {
 };
 
 const calculateRemainingGoals = (user: any, meals: any[]) => {
-  let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+  let totalCalories = 0,
+    totalProtein = 0,
+    totalCarbs = 0,
+    totalFat = 0;
 
   meals.forEach((meal) => {
     totalCalories += meal.nutritionDetails.cals || 0;
@@ -182,7 +183,7 @@ export const scanMenuImage = async (
     const userNutritionalNeeds = calculateRemainingGoals(user, meals);
     const mealTime = getMealTime();
 
-    console.log("🥗 User's Remaining Nutritional Needs:", userNutritionalNeeds);
+    console.log("User's Remaining Nutritional Needs:", userNutritionalNeeds);
 
     const aiRecommendation = await getGeminiRecommendation(
       menuText,
@@ -190,7 +191,7 @@ export const scanMenuImage = async (
       mealTime
     );
 
-    console.log("🔮 AI Recommended Meal:", aiRecommendation);
+    console.log("AI Recommended Meal:", aiRecommendation);
 
     res.status(200).json({
       menuText,
@@ -198,7 +199,7 @@ export const scanMenuImage = async (
       userNutritionalNeeds,
     });
   } catch (error) {
-    console.error("❌ Error in scanMenuImage:", error);
+    console.error("Error in scanMenuImage:", error);
     next(error);
   }
 };

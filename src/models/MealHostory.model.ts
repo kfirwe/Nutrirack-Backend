@@ -36,7 +36,6 @@ const MealHistorySchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Custom validation: Ensure at least one nutrition field is provided
 MealHistorySchema.pre<IMealHistory>("validate", function (next) {
   const { cals, protein, carbs, fat } = this.nutritionDetails || {};
   if (!cals && !protein && !carbs && !fat) {
@@ -49,7 +48,6 @@ MealHistorySchema.pre<IMealHistory>("validate", function (next) {
   next();
 });
 
-// ✅ Pre-save hook to set default values if any field is missing
 MealHistorySchema.pre<IMealHistory>("save", function (next) {
   this.nutritionDetails = {
     cals: this.nutritionDetails.cals ?? 0,
