@@ -242,3 +242,34 @@ export const fetchMealTimesDataController = async (
       .json({ error: "Failed to get the user meal times graph data" });
   }
 };
+
+export const updateProfilePicture = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as { id: string })?.id;
+    const { image } = req.body;
+
+    if (!image) {
+      res.status(400).json({ message: "Image is required" });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: image },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      profilePicture: user.profilePicture,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

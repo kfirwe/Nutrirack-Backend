@@ -22,10 +22,15 @@ export const hashPassword = async (password: string) =>
 export const comparePassword = async (input: string, hash: string) =>
   bcrypt.compare(input, hash);
 
-export const findUserByEmail = async (email: string) =>
-  User.findOne({ email });
+export const findUserByEmail = async (email: string) => User.findOne({ email });
 
-export const registerUser = async (name: string, email: string, password: string) => {
+export const registerUser = async (
+  name: string,
+  email: string,
+  password: string,
+  goals?: object | undefined
+) => {
   const hashed = await hashPassword(password);
+  if (goals) return await User.create({ name, email, password: hashed, goals });
   return await User.create({ name, email, password: hashed });
 };
