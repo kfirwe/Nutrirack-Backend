@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import MealHistory from "../models/MealHostory.model";
 import { findOrCreateFood } from "../services/food.service";
-import { addRecentFoodService, getMealsByDateService, getRecentFoodsService } from "../services/meal.service";
+import {
+  addRecentFoodService,
+  getMealsByDateService,
+  getRecentFoodsService,
+} from "../services/meal.service";
 import { getUserById } from "../services/user.service";
 
 export const recentFoods = async (req: Request, res: Response) => {
@@ -36,7 +40,9 @@ export const addRecentFood = async (req: Request, res: Response) => {
 
 export const addManualFood = async (req: Request, res: Response) => {
   try {
-    const { name, nutritionDetails } = req.body;
+    let { name, nutritionDetails } = req.body;
+
+    if (!name) name = "Custom Food";
 
     const newFood = await findOrCreateFood(name, nutritionDetails);
 

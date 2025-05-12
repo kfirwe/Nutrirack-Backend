@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User.model";
 import {
+  fetchMealAverageTimes,
   fetchMealTimesData,
   fetchNutrientGoalAchievementGraph,
   fetchUserMacrosGoals,
@@ -240,6 +241,34 @@ export const fetchMealTimesDataController = async (
     res
       .status(500)
       .json({ error: "Failed to get the user meal times graph data" });
+  }
+};
+
+export const fetchMealAverageTimesController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate, mealType } = req.query;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({ error: "Invalid userId" });
+      return;
+    }
+
+    const result = await fetchMealAverageTimes(
+      userId,
+      mealType as string,
+      startDate as string,
+      endDate as string
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching meal times average data:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to get the user meal times average graph data" });
   }
 };
 
