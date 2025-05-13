@@ -10,6 +10,7 @@ import {
   fetchNutrientGoalAchievement,
   fetchMealTimesDataController,
   updateProfilePicture,
+  fetchMealAverageTimesController,
 } from "../controllers/user.controller";
 
 const router = express.Router();
@@ -26,6 +27,11 @@ router.get(
   fetchNutrientGoalAchievement
 );
 router.get("/meal-times/:userId", authenticate, fetchMealTimesDataController);
+router.get(
+  "/meal-times-average/:userId",
+  authenticate,
+  fetchMealAverageTimesController
+);
 router.put("/profile-picture", authenticate, updateProfilePicture);
 
 export default router;

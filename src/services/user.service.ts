@@ -90,24 +90,29 @@ export const get_graph_completions = async (
       (meal: { date: Date }) => new Date(meal.date).toISOString().split("T")[0]
     );
 
+    const PROTEIN_NORMALIZED = 0.22;
+    const CARBS_NORMALIZED = 0.18;
+    const FAT_NORMALIZED = 0.5;
+    const CALORIES_NORMALIZED = 0.1;
+
     const goalCompletionData = Object.entries(groupedMeals).map(
       ([date, meals]) => {
         const totalMacros = calculateTotalMacros(meals);
 
         const caloriesCompletion = Math.min(
-          (totalMacros.calories / user.goals.calories) * 0.25,
+          (totalMacros.calories / user.goals.calories) * CALORIES_NORMALIZED,
           1
         );
         const proteinCompletion = Math.min(
-          (totalMacros.protein / user.goals.protein) * 0.25,
+          (totalMacros.protein / user.goals.protein) * PROTEIN_NORMALIZED,
           1
         );
         const carbsCompletion = Math.min(
-          (totalMacros.carbs / user.goals.carbs) * 0.25,
+          (totalMacros.carbs / user.goals.carbs) * CARBS_NORMALIZED,
           1
         );
         const fatCompletion = Math.min(
-          (totalMacros.fat / user.goals.fat) * 0.25,
+          (totalMacros.fat / user.goals.fat) * FAT_NORMALIZED,
           1
         );
 
@@ -272,6 +277,82 @@ export const fetchMealTimesData = async (
     return meals;
   } catch (error) {
     console.error("Error fetching meal times data:", error);
+    return [];
+  }
+};
+
+export const fetchMealAverageTimes = async (
+  userId: string,
+  mealType: string,
+  startDate: string | Date,
+  endDate: string | Date
+) => {
+  try {
+    if (
+      (!endDate || endDate === "undefined" || endDate == "null") &&
+      startDate
+    ) {
+      if (startDate === "1 week")
+        startDate = new Date(new Date().setDate(new Date().getDate() - 7));
+      else if (startDate === "1 month")
+        startDate = new Date(new Date().setMonth(new Date().getMonth() - 1));
+      else if (startDate === "3 month")
+        startDate = new Date(new Date().setMonth(new Date().getMonth() - 3));
+      else if (startDate === "6 month")
+        startDate = new Date(new Date().setMonth(new Date().getMonth() - 6));
+      else if (startDate === "1 year")
+        startDate = new Date(
+          new Date().setFullYear(new Date().getFullYear() - 1)
+        );
+    }
+    endDate = new Date();
+
+    const meals = await MealHistory.aggregate([
+      {
+        $match: {
+          userId: userId,
+          date: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        },
+      },
+      {
+        $addFields: {
+          mealTime: {
+            $cond: {
+              if: { $lt: [{ $hour: "$date" }, 12] },
+              then: "Breakfast",
+              else: {
+                $cond: {
+                  if: { $lt: [{ $hour: "$date" }, 18] },
+                  then: "Lunch",
+                  else: "Dinner",
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: { mealTime: mealType },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%d/%m", date: "$date" },
+          },
+          averageMealTime: { $avg: { $hour: "$date" } },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    return meals;
+  } catch (error) {
+    console.error("Error fetching meal average times:", error);
     return [];
   }
 };
