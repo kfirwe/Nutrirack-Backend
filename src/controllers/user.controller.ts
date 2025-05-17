@@ -7,7 +7,8 @@ import {
   findNutrientGoalAchievementGraph,
   findUserById,
   findUserMacrosToday,
-  findUserMacrosGoals
+  findUserMacrosGoals,
+  fetchMealAverageTimes
 } from "../services/user.service";
 
 export const updateUserProfile = async (req: Request, res: Response) => {
@@ -296,5 +297,64 @@ export const fetchMealTimesDataController = async (
     res
       .status(500)
       .json({ error: "Failed to get the user meal times graph data" });
+  }
+};
+
+export const fetchMealAverageTimesController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate, mealType } = req.query;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({ error: "Invalid userId" });
+      return;
+    }
+
+    const result = await fetchMealAverageTimes(
+      userId,
+      mealType as string,
+      startDate as string,
+      endDate as string
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching meal times average data:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to get the user meal times average graph data" });
+  }
+};
+
+export const updateProfilePicture = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as { id: string })?.id;
+    const { image } = req.body;
+
+    if (!image) {
+      res.status(400).json({ message: "Image is required" });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: image },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      profilePicture: user.profilePicture,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

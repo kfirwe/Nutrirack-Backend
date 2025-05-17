@@ -40,7 +40,9 @@ export const addRecentFood = async (req: Request, res: Response) => {
 
 export const addManualFood = async (req: Request, res: Response) => {
   try {
-    const { name, nutritionDetails } = req.body;
+    let { name, nutritionDetails } = req.body;
+
+    if (!name) name = "Custom Food";
 
     const newFood = await findOrCreateFood(name, nutritionDetails);
 

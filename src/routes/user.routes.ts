@@ -10,6 +10,8 @@ import {
   updateUserProfile,
   updateUserData,
   updateUserMacroGoals
+   fetchMealAverageTimesController,
+  updateProfilePicture,
 } from "../controllers/user.controller";
 import { authenticate } from "../middlewares/authMiddleware";
 
@@ -29,5 +31,11 @@ router.get(
   fetchNutrientGoalAchievement
 );
 router.get("/meal-times/:userId", authenticate, fetchMealTimesDataController);
+router.get(
+  "/meal-times-average/:userId",
+  authenticate,
+  fetchMealAverageTimesController
+);
+router.put("/profile-picture", authenticate, updateProfilePicture);
 
 export default router;
