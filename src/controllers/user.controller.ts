@@ -1,19 +1,16 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import User from "../models/User.model";
+import { calculateMacros } from "../services/calculateMacros";
 import {
   fetchMealAverageTimes,
   fetchMealTimesData,
   fetchNutrientGoalAchievementGraph,
   fetchUserMacrosGoals,
+  generateWeeklyProgress,
   get_graph_completions,
   getUserById,
-  getUserMacrosToday,
+  getUserMacrosToday
 } from "../services/user.service";
-import { calculateMacros } from "../services/calculateMacros";
-import {
-  NutrientData,
-  NutrientGoalAchievementParams,
-} from "../types/graphs.types";
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
@@ -300,5 +297,28 @@ export const updateProfilePicture = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating profile picture:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getWeekProgress: RequestHandler = async (req, res) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const userId = (req.user as { id: string }).id;
+    const user = await User.findById(userId);
+
+    if (!user || !user.goals) {
+      res.status(404).json({ message: "User or goals not found" });
+      return;
+    }
+
+    const week = await generateWeeklyProgress(userId, user.goals);
+    res.status(200).json({ week });
+  } catch (err) {
+    console.error("Error in getWeekProgress:", err);
+    res.status(500).json({ message: "Failed to get weekly progress" });
   }
 };

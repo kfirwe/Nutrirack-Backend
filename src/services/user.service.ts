@@ -4,6 +4,7 @@ import { Macros } from "../types/nutrition.types";
 import mongoose from "mongoose";
 import _ from "lodash";
 import { MealHistoryEntry, NutrientData } from "../types/graphs.types";
+import { getMealsForUserInRange } from "./meal.service";
 
 export const calculateTotalMacros = (meals: any[]): Macros => {
   return meals.reduce(
@@ -356,3 +357,50 @@ export const fetchMealAverageTimes = async (
     return [];
   }
 };
+
+export const generateWeeklyProgress = async (userId: string, goals: Macros) => {
+  const { startOfWeek, endOfWeek } = getWeekRange(new Date());
+  const meals = await getMealsForUserInRange(userId, startOfWeek, endOfWeek);
+  const dailyMap = groupMealsByDay(meals);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    const key = date.toDateString();
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+
+    const totals = calculateTotalMacros(dailyMap.get(key) || []);
+    const completed =
+      isWithin(totals.calories, goals.calories) &&
+      isWithin(totals.protein, goals.protein) &&
+      isWithin(totals.carbs, goals.carbs) &&
+      isWithin(totals.fat, goals.fat);
+
+    return { day: dayName, completed };
+  });
+};
+
+const getWeekRange = (today: Date) => {
+  const start = new Date(today);
+  start.setDate(today.getDate() - today.getDay());
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  return { startOfWeek: start, endOfWeek: end };
+};
+
+const groupMealsByDay = (meals: any[]) => {
+  const map = new Map<string, any[]>();
+  for (const meal of meals) {
+    const key = new Date(meal.date).toDateString();
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(meal);
+  }
+  return map;
+};
+
+const isWithin = (val: number, goal: number) =>
+  val >= goal * 0.9 && val <= goal * 1.1;

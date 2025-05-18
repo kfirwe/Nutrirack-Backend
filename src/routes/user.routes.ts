@@ -1,17 +1,18 @@
 import express from "express";
-import { authenticate } from "../middlewares/authMiddleware";
 import {
-  updateUserProfile,
-  getMacrosForToday,
-  getUserMacrosGoals,
-  updateUserMacroGoals,
-  getUser,
-  getGraphCompletions,
-  fetchNutrientGoalAchievement,
-  fetchMealTimesDataController,
-  updateProfilePicture,
   fetchMealAverageTimesController,
+  fetchMealTimesDataController,
+  fetchNutrientGoalAchievement,
+  getGraphCompletions,
+  getMacrosForToday,
+  getUser,
+  getUserMacrosGoals,
+  getWeekProgress,
+  updateProfilePicture,
+  updateUserMacroGoals,
+  updateUserProfile,
 } from "../controllers/user.controller";
+import { authenticate } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
@@ -33,5 +34,8 @@ router.get(
   fetchMealAverageTimesController
 );
 router.put("/profile-picture", authenticate, updateProfilePicture);
+
+router.get("/progress/week", authenticate, getWeekProgress);
+
 
 export default router;
