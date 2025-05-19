@@ -3,12 +3,12 @@ import User from "../models/User.model";
 import { calculateMacros } from "../services/calculateMacros";
 import {
   findGraphCompletions,
+  findMealAverageTimes,
   findMealTimesData,
   findNutrientGoalAchievementGraph,
   findUserById,
-  findUserMacrosToday,
   findUserMacrosGoals,
-  findMealAverageTimes,
+  findUserMacrosToday,
   generateWeeklyProgress
 } from "../services/user.service";
 
@@ -78,26 +78,25 @@ export const updateUserData = async (req: Request, res: Response) => {
       return;
     }
 
-    Object.assign(user, {
-      height,
-      weight,
-      goalWeight,
-      age,
-      gender,
-      activityLevel,
-      lastLogin: new Date(),
-    });
+    const updates: Partial<typeof user> = {};
+    if (height !== undefined) updates.height = height;
+    if (weight !== undefined) updates.weight = weight;
+    if (goalWeight !== undefined) updates.goalWeight = goalWeight;
+    if (age !== undefined) updates.age = age;
+    if (gender !== undefined) updates.gender = gender;
+    if (activityLevel !== undefined) updates.activityLevel = activityLevel;
+
+    Object.assign(user, updates, { lastLogin: new Date() });
 
     await user.save();
 
-    res.status(200).json({
-      message: "Profile updated successfully"
-    });
+    res.status(200).json({ message: "Profile updated successfully" });
   } catch (error) {
     console.error("Error updating user profile:", error);
     res.status(500).json({ message: "Failed to update profile" });
   }
 };
+
 
 export const generateMacrosForUser = async (req: Request, res: Response) => {
   try {

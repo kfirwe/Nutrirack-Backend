@@ -21,7 +21,7 @@ const router = express.Router();
 router.get("/", authenticate, getUser);
 router.put("/", authenticate, updateUserData);
 router.post("/macros/setup", authenticate, updateUserProfile);
-router.get("/macros/generate", authenticate, generateMacrosForUser);
+router.post("/macros/generate", authenticate, generateMacrosForUser);
 router.get("/macros/today", authenticate, getMacrosForToday);
 router.get("/macros/goals", authenticate, getUserMacrosGoals);
 router.put("/macros/goals", authenticate, updateUserMacroGoals);
