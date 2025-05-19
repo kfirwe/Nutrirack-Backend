@@ -3,9 +3,10 @@ import { getUsersWhoMetTodayCalories, getUsersBelowCalorieThreshold } from "./us
 import cron from 'node-cron';
 
 const alertTodaySuperChamps = async () => {
+  console.log("alerting!")
   const calorieChamps = await getUsersWhoMetTodayCalories();
   calorieChamps.forEach(calorieChamp => {
-    sendMail(calorieChamp.email,"goal reched", `hi ${calorieChamp.name} you reached you goal today!!`);
+    sendMail(calorieChamp.email,"eat more!", `hi ${calorieChamp.name} you need to eat more!`);
   });
 }
 
@@ -22,6 +23,6 @@ cron.schedule('50 23 * * *', alertTodaySuperChamps, {
 });
 
 
-cron.schedule('50 23 * * *', alertTodaySuperChamps, {
-  timezone: 'Etc/UTC'
+cron.schedule('4 18 * * *', alertUsersInsertFoodMeals, {
+  timezone: 'Asia/Jerusalem'
 });

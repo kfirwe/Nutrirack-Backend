@@ -11,7 +11,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import chatRoutes from "./routes/chat.routes";
 import historyRoutes from "./routes/history.routes";
-
+import './services/cronjobs.service'
 dotenv.config();
 
 const app: Application = express();
