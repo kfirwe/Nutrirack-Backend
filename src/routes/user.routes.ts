@@ -9,9 +9,10 @@ import {
   getUserMacrosGoals,
   updateUserProfile,
   updateUserData,
-  updateUserMacroGoals
-   fetchMealAverageTimesController,
+  updateUserMacroGoals,
   updateProfilePicture,
+  getWeekProgress,
+  findMealAverageTimesController as getMealAverageTimesController,
 } from "../controllers/user.controller";
 import { authenticate } from "../middlewares/authMiddleware";
 
@@ -34,8 +35,11 @@ router.get("/meal-times/:userId", authenticate, fetchMealTimesDataController);
 router.get(
   "/meal-times-average/:userId",
   authenticate,
-  fetchMealAverageTimesController
+  getMealAverageTimesController
 );
 router.put("/profile-picture", authenticate, updateProfilePicture);
+
+router.get("/progress/week", authenticate, getWeekProgress);
+
 
 export default router;
