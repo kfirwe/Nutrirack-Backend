@@ -3,6 +3,7 @@ import MealHistory from "../models/MealHostory.model";
 import { findOrCreateFood } from "../services/food.service";
 import {
   addRecentFoodService,
+  deleteMealById,
   getMealsByDateService,
   getRecentFoodsService,
 } from "../services/meal.service";
@@ -158,5 +159,57 @@ export const getMealsByDate = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching meals by date:", error);
     res.status(500).json({ error: "Failed to fetch meals" });
+  }
+};
+
+export const deleteMealByMealId = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as { id: string }).id;
+    const { mealId } = req.params;
+
+    if (typeof mealId !== "string") {
+      res.status(400).json({ error: "Invalid mealId" });
+      return;
+    }
+
+    const meals = await deleteMealById(userId, mealId);
+    res.status(200).json({ meals });
+  } catch (error) {
+    console.error("Error deleting meal:", error);
+    res.status(500).json({ error: "Failed to delete meal" });
+  }
+};
+
+export const updateMeal = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as { id: string })?.id;
+    const { mealId, nutritionDetails } = req.body;
+
+    if (!mealId || !nutritionDetails) {
+      res.status(400).json({ message: "mealId and nutritionDetails are required." });
+      return
+    }
+
+    const meal = await MealHistory.findOne({ _id: mealId, userId });
+
+    if (!meal) {
+      res.status(404).json({ message: "Meal not found." });
+      return
+    }
+
+    meal.nutritionDetails = {
+      ...meal.nutritionDetails,
+      ...nutritionDetails,
+    };
+
+    await meal.save();
+
+    res.status(200).json({
+      message: "Meal updated successfully",
+      meal,
+    });
+  } catch (error) {
+    console.error("Error updating meal:", error);
+    res.status(500).json({ message: "Failed to update meal." });
   }
 };

@@ -98,3 +98,16 @@ export const getMealsForUserInRange = async (userId: string, start: Date, end: D
     date: { $gte: start, $lte: end },
   });
 };
+
+export const deleteMealById = async (
+  userId: string,
+  mealId: string
+) => {
+  return MealHistory.deleteOne({
+    _id: mealId,
+    userId
+  })
+    .sort({ createdAt: -1 })
+    .populate("ingredients");
+};
+
