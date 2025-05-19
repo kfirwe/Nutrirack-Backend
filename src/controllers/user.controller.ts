@@ -2,14 +2,14 @@ import { Request, RequestHandler, Response } from "express";
 import User from "../models/User.model";
 import { calculateMacros } from "../services/calculateMacros";
 import {
-  fetchMealAverageTimes,
-  fetchMealTimesData,
-  fetchNutrientGoalAchievementGraph,
-  fetchUserMacrosGoals,
-  generateWeeklyProgress,
-  get_graph_completions,
-  getUserById,
-  getUserMacrosToday
+  findGraphCompletions,
+  findMealAverageTimes,
+  findMealTimesData,
+  findNutrientGoalAchievementGraph,
+  findUserById,
+  findUserMacrosGoals,
+  findUserMacrosToday,
+  generateWeeklyProgress
 } from "../services/user.service";
 
 export const updateUserProfile = async (req: Request, res: Response) => {
@@ -22,7 +22,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await getUserById(userId);
+    const user = await findUserById(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -61,6 +61,65 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUserData = async (req: Request, res: Response) => {
+  try {
+    const { height, weight, goalWeight, age, gender, activityLevel } = req.body;
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const userId = (req.user as { id: string })?.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const updates: Partial<typeof user> = {};
+    if (height !== undefined) updates.height = height;
+    if (weight !== undefined) updates.weight = weight;
+    if (goalWeight !== undefined) updates.goalWeight = goalWeight;
+    if (age !== undefined) updates.age = age;
+    if (gender !== undefined) updates.gender = gender;
+    if (activityLevel !== undefined) updates.activityLevel = activityLevel;
+
+    Object.assign(user, updates, { lastLogin: new Date() });
+
+    await user.save();
+
+    res.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};
+
+
+export const generateMacrosForUser = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as { id: string })?.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const macros = calculateMacros(user);
+
+    res.status(200).json({
+      message: "Macros generated successfully",
+      goals: macros,
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};
+
 export const getUser = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -69,7 +128,7 @@ export const getUser = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await getUserById(userId);
+    const user = await findUserById(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -91,7 +150,7 @@ export const getMacrosForToday = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const user = await getUserMacrosToday(userId);
+    const user = await findUserMacrosToday(userId);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -113,7 +172,7 @@ export const getUserMacrosGoals = async (req: Request, res: Response) => {
     }
 
     const userId = (req.user as { id: string })?.id;
-    const goals = await fetchUserMacrosGoals(userId);
+    const goals = await findUserMacrosGoals(userId);
     res.status(200).json({ goals });
   } catch (error) {
     console.error("Error fetching user macros goals:", error);
@@ -136,7 +195,7 @@ export const updateUserMacroGoals = async (req: Request, res: Response) => {
       return;
     }
 
-    const user = await getUserById(userId);
+    const user = await findUserById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -162,7 +221,7 @@ export const getGraphCompletions = async (req: Request, res: Response) => {
     if (!user) {
       res.status(404).json({ error: "User not found" });
     }
-    const result = await get_graph_completions(
+    const result = await findGraphCompletions(
       userId as string,
       startDate as string,
       endDate as string,
@@ -202,7 +261,7 @@ export const fetchNutrientGoalAchievement = async (
       res.status(400).json({ error: "Invalid nutrient type" });
       return;
     }
-    const result = await fetchNutrientGoalAchievementGraph(
+    const result = await findNutrientGoalAchievementGraph(
       userId,
       nutrient as "calories" | "protein" | "carbs" | "fat",
       period
@@ -227,7 +286,7 @@ export const fetchMealTimesDataController = async (
       return;
     }
 
-    const result = await fetchMealTimesData(
+    const result = await findMealTimesData(
       userId,
       startDate as string,
       endDate as string
@@ -241,7 +300,7 @@ export const fetchMealTimesDataController = async (
   }
 };
 
-export const fetchMealAverageTimesController = async (
+export const findMealAverageTimesController = async (
   req: Request,
   res: Response
 ) => {
@@ -254,7 +313,7 @@ export const fetchMealAverageTimesController = async (
       return;
     }
 
-    const result = await fetchMealAverageTimes(
+    const result = await findMealAverageTimes(
       userId,
       mealType as string,
       startDate as string,

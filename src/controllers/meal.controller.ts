@@ -6,7 +6,7 @@ import {
   getMealsByDateService,
   getRecentFoodsService,
 } from "../services/meal.service";
-import { getUserById } from "../services/user.service";
+import { findUserById } from "../services/user.service";
 
 export const recentFoods = async (req: Request, res: Response) => {
   try {
@@ -104,7 +104,7 @@ export const CheckGoals = async (req: Request, res: Response) => {
       `Total Today: Cals: ${totalCals}, Protein: ${totalProtein}, Carbs: ${totalCarbs}, Fat: ${totalFat}`
     );
 
-    const user = await getUserById(userId);
+    const user = await findUserById(userId);
 
     if (!user) {
       res.status(404).json({ error: "User not found" });

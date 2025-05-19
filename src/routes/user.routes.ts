@@ -1,23 +1,27 @@
 import express from "express";
 import {
-  fetchMealAverageTimesController,
   fetchMealTimesDataController,
   fetchNutrientGoalAchievement,
+  generateMacrosForUser,
   getGraphCompletions,
   getMacrosForToday,
   getUser,
   getUserMacrosGoals,
-  getWeekProgress,
-  updateProfilePicture,
-  updateUserMacroGoals,
   updateUserProfile,
+  updateUserData,
+  updateUserMacroGoals,
+  updateProfilePicture,
+  getWeekProgress,
+  findMealAverageTimesController as getMealAverageTimesController,
 } from "../controllers/user.controller";
 import { authenticate } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
 router.get("/", authenticate, getUser);
-router.post("/profile-setup", authenticate, updateUserProfile);
+router.put("/", authenticate, updateUserData);
+router.post("/macros/setup", authenticate, updateUserProfile);
+router.post("/macros/generate", authenticate, generateMacrosForUser);
 router.get("/macros/today", authenticate, getMacrosForToday);
 router.get("/macros/goals", authenticate, getUserMacrosGoals);
 router.put("/macros/goals", authenticate, updateUserMacroGoals);
@@ -31,7 +35,7 @@ router.get("/meal-times/:userId", authenticate, fetchMealTimesDataController);
 router.get(
   "/meal-times-average/:userId",
   authenticate,
-  fetchMealAverageTimesController
+  getMealAverageTimesController
 );
 router.put("/profile-picture", authenticate, updateProfilePicture);
 

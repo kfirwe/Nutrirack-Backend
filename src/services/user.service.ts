@@ -19,7 +19,7 @@ export const calculateTotalMacros = (meals: any[]): Macros => {
   );
 };
 
-export const getUserById = async (userId: string) => {
+export const findUserById = async (userId: string) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -32,7 +32,7 @@ export const getUserById = async (userId: string) => {
   }
 };
 
-export const getUserMacrosToday = async (userId: string) => {
+export const findUserMacrosToday = async (userId: string) => {
   const today = new Date();
   const startOfDay = new Date(today.setHours(0, 0, 0, 0));
   const endOfDay = new Date(today.setHours(23, 59, 59, 999));
@@ -45,8 +45,8 @@ export const getUserMacrosToday = async (userId: string) => {
   return calculateTotalMacros(meals);
 };
 
-export const fetchUserMacrosGoals = async (userId: string) => {
-  const user = await getUserById(userId);
+export const findUserMacrosGoals = async (userId: string) => {
+  const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
   const { goals } = user;
@@ -55,7 +55,7 @@ export const fetchUserMacrosGoals = async (userId: string) => {
   return goals;
 };
 
-export const get_graph_completions = async (
+export const findGraphCompletions = async (
   userId: string,
   startDate: string | Date,
   endDate: string | Date,
@@ -137,75 +137,75 @@ export const get_graph_completions = async (
   }
 };
 
-export const fetchNutrientGoalAchievementGraph = async (
+export const findNutrientGoalAchievementGraph = async (
   userId: string,
   nutrient: string,
   period: "1 week" | "1 month" | "3 month" | "6 month" | "1 year"
 ): Promise<NutrientData[] | undefined> => {
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    const goal = user.goals[nutrient as keyof typeof user.goals];
-
-    if (nutrient === "calories") {
-      nutrient = "cals";
-    }
-
-    let startDate = new Date();
-    let endDate = new Date();
-
-    if (period === "1 week") {
-      startDate.setDate(endDate.getDate() - 7);
-    } else if (period === "1 month") {
-      startDate.setMonth(endDate.getMonth() - 1);
-    } else if (period === "3 month") {
-      startDate.setMonth(endDate.getMonth() - 3);
-    } else if (period === "6 month") {
-      startDate.setMonth(endDate.getMonth() - 6);
-    } else if (period === "1 year") {
-      startDate.setFullYear(endDate.getFullYear() - 1);
-    }
-
-    const meals: MealHistoryEntry[] = await MealHistory.find({
-      userId,
-      date: { $gte: startDate, $lte: endDate },
-    });
-
-    const groupedMeals = _.groupBy(
-      meals,
-      (meal) => new Date(meal.date).toISOString().split("T")[0]
-    );
-
-    const nutrientData: NutrientData[] = Object.entries(groupedMeals).map(
-      ([date, meals]) => {
-        const totalNutrientIntake = meals.reduce((sum, meal) => {
-          return (
-            sum +
-            (meal.nutritionDetails[
-              nutrient as keyof typeof meal.nutritionDetails
-            ] || 0)
-          );
-        }, 0);
-
-        return {
-          date: new Date(date),
-          intake: totalNutrientIntake,
-          goal: goal,
-          achievementPercentage: totalNutrientIntake / goal,
-        };
-      }
-    );
-
-    return nutrientData;
-  } catch (error) {
-    console.error("Error fetching nutrient goal achievement graph:", error);
-    return;
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
   }
+  const goal = user.goals[nutrient as keyof typeof user.goals];
+
+  if (nutrient === "calories") {
+    nutrient = "cals";
+  }
+
+  let startDate = new Date();
+  let endDate = new Date();
+
+  if (period === "1 week") {
+    startDate.setDate(endDate.getDate() - 7);
+  } else if (period === "1 month") {
+    startDate.setMonth(endDate.getMonth() - 1);
+  } else if (period === "3 month") {
+    startDate.setMonth(endDate.getMonth() - 3);
+  } else if (period === "6 month") {
+    startDate.setMonth(endDate.getMonth() - 6);
+  } else if (period === "1 year") {
+    startDate.setFullYear(endDate.getFullYear() - 1);
+  }
+
+  const meals: MealHistoryEntry[] = await MealHistory.find({
+    userId,
+    date: { $gte: startDate, $lte: endDate },
+  });
+
+  const groupedMeals = _.groupBy(
+    meals,
+    (meal: { date: string | number | Date; }) => new Date(meal.date).toISOString().split("T")[0]
+  );
+
+  const nutrientData: NutrientData[] = Object.entries(groupedMeals).map(
+    ([date, meals]) => {
+      const totalNutrientIntake = meals.reduce((sum, meal) => {
+        return (
+          sum +
+          (meal.nutritionDetails[
+            nutrient as keyof typeof meal.nutritionDetails
+          ] || 0)
+        );
+      }, 0);
+
+      return {
+        date: new Date(date),
+        intake: totalNutrientIntake,
+        goal: goal,
+        achievementPercentage: totalNutrientIntake / goal,
+      };
+    }
+  );
+
+  return nutrientData;
+} catch (error) {
+  console.error("Error fetching nutrient goal achievement graph:", error);
+  return;
+}
 };
 
-export const fetchMealTimesData = async (
+export const findMealTimesData = async (
   userId: string,
   startDate: string | Date,
   endDate: string | Date
@@ -282,7 +282,7 @@ export const fetchMealTimesData = async (
   }
 };
 
-export const fetchMealAverageTimes = async (
+export const findMealAverageTimes = async (
   userId: string,
   mealType: string,
   startDate: string | Date,
