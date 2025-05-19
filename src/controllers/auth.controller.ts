@@ -15,6 +15,7 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
+    console.log("try to register")
     const { name, email, password, goals } = req.body;
 
     const existingUser = await findUserByEmail(email);
@@ -43,7 +44,7 @@ export const loginUser = async (
 ): Promise<void> => {
   try {
     const { email, password } = req.body;
-
+    console.log("try to log in")
     const user = await findUserByEmail(email);
     if (!user) {
       res.status(StatusCodes.NOT_FOUND).json({ message: "User not found" });

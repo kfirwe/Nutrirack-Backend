@@ -404,3 +404,134 @@ const groupMealsByDay = (meals: any[]) => {
 
 const isWithin = (val: number, goal: number) =>
   val >= goal * 0.9 && val <= goal * 1.1;
+
+export interface UserCaloriesHit {
+  name: string;
+  email: string;
+}
+
+/**
+ * All users whose total calories logged between 00:00 and 23:59 today
+ * are ≤ their personal calorie goal.
+ */
+export async function getUsersWhoMetTodayCalories(
+  date: Date = new Date()
+): Promise<UserCaloriesHit[]> {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  const hits = await MealHistory.aggregate([
+    /* today’s meals only */
+    { $match: { date: { $gte: start, $lte: end } } },
+
+    /* sum calories per user */
+    {
+      $group: {
+        _id: { $toObjectId: '$userId' },
+        totalCals: { $sum: '$nutritionDetails.cals' },
+      },
+    },
+
+    /* pull in the user document */
+    {
+      $lookup: {
+        from: User.collection.name, // usually "users"
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: '$user' },
+
+    /* compare total calories with the stored goal */
+    {
+      $addFields: {
+        metCalories: {
+          $cond: [
+            { $gt: ['$user.goals.calories', null] }, // goal exists?
+            { $lte: ['$totalCals', '$user.goals.calories'] }, // ≤ goal
+            false, // no goal → treat as not met
+          ],
+        },
+      },
+    },
+    { $match: { metCalories: true } },
+
+    /* return requested fields only */
+    { $project: { _id: 0, name: '$user.name', email: '$user.email' } },
+  ]);
+
+  return hits as UserCaloriesHit[];
+}
+
+export interface UserCaloriesMissed {
+  name: string;
+  email: string;
+}
+
+export async function getUsersBelowCalorieThreshold(
+  percent: number,
+  date: Date = new Date()
+): Promise<UserCaloriesMissed[]> {
+  if (percent <= 0 || percent >= 100) {
+    throw new Error('percent must be between 0 and 100 (exclusive).');
+  }
+
+  const factor = percent / 100;            // e.g. 0.8
+
+  /* build the day-range */
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  const misses = await MealHistory.aggregate([
+    /* today’s meals */
+    { $match: { date: { $gte: start, $lte: end } } },
+
+    /* total calories per user */
+    {
+      $group: {
+        _id: { $toObjectId: '$userId' },
+        totalCals: { $sum: '$nutritionDetails.cals' },
+      },
+    },
+
+    /* attach the user document */
+    {
+      $lookup: {
+        from: User.collection.name,
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: '$user' },
+
+    /* keep only users with a calorie goal defined */
+    {
+      $match: {
+        'user.goals.calories': { $type: 'number', $gt: 0 },
+      },
+    },
+
+    /* compare totals to the “X % of goal” threshold */
+    {
+      $match: {
+        $expr: {
+          $lt: [
+            '$totalCals',
+            { $multiply: ['$user.goals.calories', factor] }, // < goal * factor
+          ],
+        },
+      },
+    },
+
+    /* final projection */
+    { $project: { _id: 0, name: '$user.name', email: '$user.email' } },
+  ]);
+
+  return misses as UserCaloriesMissed[];
+}
