@@ -11,6 +11,7 @@ import {
   fetchMealTimesDataController,
   updateProfilePicture,
   fetchMealAverageTimesController,
+  savePushTokenController,
 } from "../controllers/user.controller";
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.get(
   fetchMealAverageTimesController
 );
 router.put("/profile-picture", authenticate, updateProfilePicture);
+router.put("/save-push-token", authenticate, savePushTokenController);
 
 export default router;

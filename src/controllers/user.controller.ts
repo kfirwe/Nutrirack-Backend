@@ -14,6 +14,7 @@ import {
   NutrientData,
   NutrientGoalAchievementParams,
 } from "../types/graphs.types";
+import Expo from "expo-server-sdk";
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
@@ -300,5 +301,22 @@ export const updateProfilePicture = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating profile picture:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const savePushTokenController = async (req: Request, res: Response) => {
+  console.log("here");
+  const userId = (req.user as { id: string })?.id;
+  const { pushToken } = req.body;
+  if (!Expo.isExpoPushToken(pushToken)) {
+    console.error("Invalid Expo push token");
+    return;
+  }
+  try {
+    console.log("Received push token:", pushToken);
+    await User.findByIdAndUpdate(userId, { pushToken });
+    res.status(200).json({ message: "Push token saved successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving push token" });
   }
 };
