@@ -356,3 +356,38 @@ export const fetchMealAverageTimes = async (
     return [];
   }
 };
+
+export const getUserRemainingMacros = async (userId: any) => {
+  try {
+    const goals = await fetchUserMacrosGoals(userId);
+    const totalMacro = await getUserMacrosToday(userId);
+
+    if (!goals || !totalMacro) {
+      return {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      };
+    }
+
+    console.log(totalMacro);
+
+    const remainingMacros = {
+      calories: goals.calories - totalMacro.calories,
+      protein: goals.protein - totalMacro.protein,
+      carbs: goals.carbs - totalMacro.carbs,
+      fat: goals.fat - totalMacro.fat,
+    };
+
+    return remainingMacros;
+  } catch (error) {
+    console.error("Error fetching user's remaining macros:", error);
+    return {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    };
+  }
+};

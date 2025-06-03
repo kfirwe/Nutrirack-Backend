@@ -4,10 +4,6 @@ import cors from "cors";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import moment from "moment";
-import { sendPushNotification } from "./services/push.service";
-import User from "./models/User.model";
-import Reminder from "./models/Reminder.model";
 
 import { errorHandler } from "./middlewares/errorHandler";
 import scanRoutes from "./routes/scan.routes";
@@ -15,6 +11,8 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import chatRoutes from "./routes/chat.routes";
 import historyRoutes from "./routes/history.routes";
+import reminderRoutes from "./routes/reminder.routes";
+import { reminderNotificationScheduler } from "./utils/helpers";
 
 dotenv.config();
 
@@ -38,44 +36,14 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/history", historyRoutes);
+app.use("/reminders", reminderRoutes);
 app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
 
 if (require.main === module) {
-  setInterval(async () => {
-    try {
-      const currentTime = moment().utc(); // Get current time in UTC
-      console.log("Current time:", currentTime.format());
-      // Find reminders that should be triggered
-      const reminders = await Reminder.find({
-        reminderTime: { $lte: currentTime.toDate() }, // Find reminders whose time is less than or equal to current time
-        notificationSent: false, // Make sure we don't send the same notification again
-      });
+  reminderNotificationScheduler();
 
-      // Process each reminder
-      for (let reminder of reminders) {
-        const { userId, notificationMessage } = reminder;
-
-        // Find user push token
-        const user = await User.findById(userId);
-        if (user && user.pushToken) {
-          // Send notification if user has a push token
-          await sendPushNotification(user.pushToken, notificationMessage);
-
-          // Mark reminder as sent
-          await Reminder.findByIdAndUpdate(reminder._id, {
-            notificationSent: true,
-          });
-          console.log(
-            `Notification sent to user ${userId} for reminder: ${notificationMessage}`
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error checking for reminders:", error);
-    }
-  }, 15000); // Run every 15 seconds
   mongoose
     .connect(process.env.MONGO_URI || "")
     .then(() => {

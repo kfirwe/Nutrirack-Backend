@@ -18,7 +18,7 @@ const reminderSchema = new Schema(
     },
     mealType: {
       type: String,
-      enum: ["breakfast", "lunch", "dinner"],
+      enum: ["breakfast", "lunch", "dinner", "snack", "daily-goal"],
       required: true,
     },
     reminderTime: { type: Date, required: true },
