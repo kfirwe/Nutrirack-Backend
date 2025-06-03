@@ -361,8 +361,8 @@ export const findMealAverageTimes = async (
 
 export const getUserRemainingMacros = async (userId: any) => {
   try {
-    const goals = await fetchUserMacrosGoals(userId);
-    const totalMacro = await getUserMacrosToday(userId);
+    const goals = await findUserMacrosGoals(userId);
+    const totalMacro = await findUserMacrosToday(userId);
 
     if (!goals || !totalMacro) {
       return {
@@ -394,42 +394,9 @@ export const getUserRemainingMacros = async (userId: any) => {
   }
 };
 
-export const generateWeeklyProgress = async (userId: string, goals: Macros) => {
-  const { startOfWeek, endOfWeek } = getWeekRange(new Date());
-  const meals = await getMealsForUserInRange(userId, startOfWeek, endOfWeek);
-  const dailyMap = groupMealsByDay(meals);
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    const key = date.toDateString();
-    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-
-    const totals = calculateTotalMacros(dailyMap.get(key) || []);
-    const completed =
-      isWithin(totals.calories, goals.calories) &&
-      isWithin(totals.protein, goals.protein) &&
-      isWithin(totals.carbs, goals.carbs) &&
-      isWithin(totals.fat, goals.fat);
-
-    return { day: dayName, completed };
-  });
+const isWithin = (val: number, goal: number) => {
+  return val >= goal * 0.9 && val <= goal * 1.1;
 };
-
-const getWeekRange = (today: Date) => {
-  const start = new Date(today);
-  start.setDate(today.getDate() - today.getDay());
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(23, 59, 59, 999);
-
-  return { startOfWeek: start, endOfWeek: end };
-};
-
-const isWithin = (val: number, goal: number) =>
-  val >= goal * 0.9 && val <= goal * 1.1;
 
 export const generateWeeklyProgress = async (userId: string, goals: Macros) => {
   const { startOfWeek, endOfWeek } = getWeekRange(new Date());
