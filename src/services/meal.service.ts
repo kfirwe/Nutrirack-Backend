@@ -91,3 +91,23 @@ export const getMealsByDateService = async (
     .sort({ createdAt: -1 })
     .populate("ingredients");
 };
+
+export const getMealsForUserInRange = async (userId: string, start: Date, end: Date) => {
+  return MealHistory.find({
+    userId,
+    date: { $gte: start, $lte: end },
+  });
+};
+
+export const deleteMealById = async (
+  userId: string,
+  mealId: string
+) => {
+  return MealHistory.deleteOne({
+    _id: mealId,
+    userId
+  })
+    .sort({ createdAt: -1 })
+    .populate("ingredients");
+};
+

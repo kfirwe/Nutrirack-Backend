@@ -6,9 +6,13 @@ import {
 } from "../helpers/scan.helpers";
 import MealHistory from "../models/MealHostory.model";
 import { findOrCreateFood } from "../services/food.service";
-import { callLogmealAPI, callLogmealBarcodeAPI, callUSDADatasetAPI } from "../services/scan.service";
 import { createMealHistory } from "../services/meal.service";
-import { getUserById } from "../services/user.service";
+import {
+  callLogmealAPI,
+  callLogmealBarcodeAPI,
+  callUSDADatasetAPI,
+} from "../services/scan.service";
+import { findUserById } from "../services/user.service";
 
 export const scanFoodImage = async (
   req: Request,
@@ -176,7 +180,7 @@ export const scanMenuImage = async (
 
     const menuText = await extractMenuText(image);
     const userId = (req.user as { id: string })?.id;
-    const user = await getUserById(userId);
+    const user = await findUserById(userId);
 
     const meals = await getTodayMeals(user.id);
 

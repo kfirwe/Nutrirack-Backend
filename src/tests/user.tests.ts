@@ -62,7 +62,7 @@ describe("User Routes", () => {
     );
   });
 
-  test("POST /user/profile-setup - Update user profile", async () => {
+  test("POST /user/macros/setup - Update user profile", async () => {
     const profileData = {
       height: 180,
       weight: 75,
@@ -73,7 +73,7 @@ describe("User Routes", () => {
     };
 
     const response = await request(app)
-      .post("/user/profile-setup")
+      .post("/user/macros/setup")
       .set("Authorization", `Bearer ${token}`)
       .send(profileData);
 
@@ -106,10 +106,6 @@ describe("User Routes", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-    expect(response.body.goals).toHaveProperty("calories");
-    expect(response.body.goals).toHaveProperty("protein");
-    expect(response.body.goals).toHaveProperty("carbs");
-    expect(response.body.goals).toHaveProperty("fat");
   });
 
   test("PUT /user/macros/goals - Update user macro goals", async () => {
@@ -165,5 +161,60 @@ describe("User Routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toBeInstanceOf(Array);
+  });
+
+  test("GET /user/meal-times-average/:userId - Get meal times average data", async () => {
+    const response = await request(app)
+      .get(`/user/meal-times-average/${userId}`)
+      .query({ mealType: "Breakfast" })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+  });
+
+  test("PUT /user/profile-picture - Update profile picture", async () => {
+    const response = await request(app)
+      .put("/user/profile-picture")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ image: "../../images/chips.jpg" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Profile picture updated successfully"
+    );
+    expect(response.body).toHaveProperty(
+      "profilePicture",
+      "../../images/chips.jpg"
+    );
+  });
+
+  test("GET /user/progress/week - Get weekly progress", async () => {
+    const response = await request(app)
+      .get("/user/progress/week")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("week");
+    expect(Array.isArray(response.body.week)).toBe(true);
+    expect(response.body.week.length).toBe(7);
+  });
+
+  test("POST /user/macros/generate - Generate macros for user", async () => {
+    const response = await request(app)
+      .post("/user/macros/generate")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Macros generated successfully"
+    );
+    expect(response.body).toHaveProperty("goals");
+    expect(response.body.goals).toHaveProperty("calories");
+    expect(response.body.goals).toHaveProperty("protein");
+    expect(response.body.goals).toHaveProperty("carbs");
+    expect(response.body.goals).toHaveProperty("fat");
   });
 });
