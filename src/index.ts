@@ -11,6 +11,8 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import chatRoutes from "./routes/chat.routes";
 import historyRoutes from "./routes/history.routes";
+import reminderRoutes from "./routes/reminder.routes";
+import { reminderNotificationScheduler } from "./utils/helpers";
 
 dotenv.config();
 
@@ -34,11 +36,14 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/history", historyRoutes);
+app.use("/reminders", reminderRoutes);
 app.use(errorHandler);
 
 mongoose.set("strictQuery", true);
 
 if (require.main === module) {
+  reminderNotificationScheduler();
+
   mongoose
     .connect(process.env.MONGO_URI || "")
     .then(() => {

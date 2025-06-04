@@ -124,3 +124,49 @@ export const generateAIResponse = async (
     return "I encountered an issue, please try again.";
   }
 };
+
+export const generateAIResponseRecommendedFood = async (
+  userId: any,
+  mealTime: string,
+  remainingNutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }
+) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw Error("User not found");
+    }
+
+    const prompt = `
+        You are NutriTrack, a smart AI nutrition assistant. Help the user with meal choices based on the remaining nutrition for ${mealTime}.
+
+        Remaining daily goals for today:
+        Calories: ${remainingNutrition.calories} kcal
+        Protein: ${remainingNutrition.protein}g
+        Carbs: ${remainingNutrition.carbs}g
+        Fat: ${remainingNutrition.fat}g
+
+        You should only refer to the meal time now and remaining goals.
+  
+        Respond Only with the food name, and nothing more!.
+      `;
+
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
+      { contents: [{ parts: [{ text: prompt }] }] },
+      {
+        params: { key: process.env.GEMINI_API_KEY },
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    return response.data.candidates[0]?.content?.parts[0]?.text || null;
+  } catch (error) {
+    console.error("Error fetching AI response:", error);
+    return null;
+  }
+};

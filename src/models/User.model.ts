@@ -19,6 +19,7 @@ export interface IUser extends Document {
   };
   lastLogin: Date;
   profilePicture: string;
+  pushToken?: string;
 }
 
 const UserSchema: Schema = new Schema(
@@ -45,6 +46,7 @@ const UserSchema: Schema = new Schema(
       type: String,
       required: false,
     },
+    pushToken: { type: String, required: false },
   },
   { timestamps: true }
 );

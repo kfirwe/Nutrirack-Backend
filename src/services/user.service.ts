@@ -143,66 +143,67 @@ export const findNutrientGoalAchievementGraph = async (
   period: "1 week" | "1 month" | "3 month" | "6 month" | "1 year"
 ): Promise<NutrientData[] | undefined> => {
   try {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-  const goal = user.goals[nutrient as keyof typeof user.goals];
-
-  if (nutrient === "calories") {
-    nutrient = "cals";
-  }
-
-  let startDate = new Date();
-  let endDate = new Date();
-
-  if (period === "1 week") {
-    startDate.setDate(endDate.getDate() - 7);
-  } else if (period === "1 month") {
-    startDate.setMonth(endDate.getMonth() - 1);
-  } else if (period === "3 month") {
-    startDate.setMonth(endDate.getMonth() - 3);
-  } else if (period === "6 month") {
-    startDate.setMonth(endDate.getMonth() - 6);
-  } else if (period === "1 year") {
-    startDate.setFullYear(endDate.getFullYear() - 1);
-  }
-
-  const meals: MealHistoryEntry[] = await MealHistory.find({
-    userId,
-    date: { $gte: startDate, $lte: endDate },
-  });
-
-  const groupedMeals = _.groupBy(
-    meals,
-    (meal: { date: string | number | Date; }) => new Date(meal.date).toISOString().split("T")[0]
-  );
-
-  const nutrientData: NutrientData[] = Object.entries(groupedMeals).map(
-    ([date, meals]) => {
-      const totalNutrientIntake = meals.reduce((sum, meal) => {
-        return (
-          sum +
-          (meal.nutritionDetails[
-            nutrient as keyof typeof meal.nutritionDetails
-          ] || 0)
-        );
-      }, 0);
-
-      return {
-        date: new Date(date),
-        intake: totalNutrientIntake,
-        goal: goal,
-        achievementPercentage: totalNutrientIntake / goal,
-      };
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
     }
-  );
+    const goal = user.goals[nutrient as keyof typeof user.goals];
 
-  return nutrientData;
-} catch (error) {
-  console.error("Error fetching nutrient goal achievement graph:", error);
-  return;
-}
+    if (nutrient === "calories") {
+      nutrient = "cals";
+    }
+
+    let startDate = new Date();
+    let endDate = new Date();
+
+    if (period === "1 week") {
+      startDate.setDate(endDate.getDate() - 7);
+    } else if (period === "1 month") {
+      startDate.setMonth(endDate.getMonth() - 1);
+    } else if (period === "3 month") {
+      startDate.setMonth(endDate.getMonth() - 3);
+    } else if (period === "6 month") {
+      startDate.setMonth(endDate.getMonth() - 6);
+    } else if (period === "1 year") {
+      startDate.setFullYear(endDate.getFullYear() - 1);
+    }
+
+    const meals: MealHistoryEntry[] = await MealHistory.find({
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+    });
+
+    const groupedMeals = _.groupBy(
+      meals,
+      (meal: { date: string | number | Date }) =>
+        new Date(meal.date).toISOString().split("T")[0]
+    );
+
+    const nutrientData: NutrientData[] = Object.entries(groupedMeals).map(
+      ([date, meals]) => {
+        const totalNutrientIntake = meals.reduce((sum, meal) => {
+          return (
+            sum +
+            (meal.nutritionDetails[
+              nutrient as keyof typeof meal.nutritionDetails
+            ] || 0)
+          );
+        }, 0);
+
+        return {
+          date: new Date(date),
+          intake: totalNutrientIntake,
+          goal: goal,
+          achievementPercentage: totalNutrientIntake / goal,
+        };
+      }
+    );
+
+    return nutrientData;
+  } catch (error) {
+    console.error("Error fetching nutrient goal achievement graph:", error);
+    return;
+  }
 };
 
 export const findMealTimesData = async (
@@ -358,6 +359,45 @@ export const findMealAverageTimes = async (
   }
 };
 
+export const getUserRemainingMacros = async (userId: any) => {
+  try {
+    const goals = await findUserMacrosGoals(userId);
+    const totalMacro = await findUserMacrosToday(userId);
+
+    if (!goals || !totalMacro) {
+      return {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      };
+    }
+
+    console.log(totalMacro);
+
+    const remainingMacros = {
+      calories: goals.calories - totalMacro.calories,
+      protein: goals.protein - totalMacro.protein,
+      carbs: goals.carbs - totalMacro.carbs,
+      fat: goals.fat - totalMacro.fat,
+    };
+
+    return remainingMacros;
+  } catch (error) {
+    console.error("Error fetching user's remaining macros:", error);
+    return {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    };
+  }
+};
+
+const isWithin = (val: number, goal: number) => {
+  return val >= goal * 0.9 && val <= goal * 1.1;
+};
+
 export const generateWeeklyProgress = async (userId: string, goals: Macros) => {
   const { startOfWeek, endOfWeek } = getWeekRange(new Date());
   const meals = await getMealsForUserInRange(userId, startOfWeek, endOfWeek);
@@ -401,6 +441,3 @@ const groupMealsByDay = (meals: any[]) => {
   }
   return map;
 };
-
-const isWithin = (val: number, goal: number) =>
-  val >= goal * 0.9 && val <= goal * 1.1;

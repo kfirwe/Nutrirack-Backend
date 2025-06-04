@@ -13,6 +13,7 @@ import {
   updateProfilePicture,
   getWeekProgress,
   findMealAverageTimesController as getMealAverageTimesController,
+  savePushTokenController,
 } from "../controllers/user.controller";
 import { authenticate } from "../middlewares/authMiddleware";
 
@@ -38,8 +39,8 @@ router.get(
   getMealAverageTimesController
 );
 router.put("/profile-picture", authenticate, updateProfilePicture);
+router.put("/save-push-token", authenticate, savePushTokenController);
 
 router.get("/progress/week", authenticate, getWeekProgress);
-
 
 export default router;
