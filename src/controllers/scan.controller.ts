@@ -195,11 +195,11 @@ export const scanMenuImage = async (
       mealTime
     );
 
-    console.log("AI Recommended Meal:", aiRecommendation);
+    // console.log("AI Recommended Meals:", aiRecommendation);
 
     res.status(200).json({
       menuText,
-      recommendedDish: aiRecommendation,
+      recommendations: aiRecommendation.recommendations,
       userNutritionalNeeds,
     });
   } catch (error) {

@@ -39,25 +39,49 @@ export const getGeminiRecommendation = async (
 
     It is currently ${mealTime}. Based on this information:
     - **Estimate** the macronutrient values for each menu item.
-    - **Select the best meal** that **aligns with the user's daily nutrition goals**.
+    - **Select the top 2-3 meals** that **best align with the user's daily nutrition goals**.
     - **Prioritize meals suitable for the time of day** (e.g., lighter for breakfast, balanced for lunch, high protein for post-workout, etc.).
-    - If multiple meals are good options, provide the top 2-3 ranked choices.
-
-    **Response Format Example:**
-    - Recommended Meal: "Grilled Chicken Salad"
-    - Estimated Nutrition: ~500 kcal, 40g protein, 35g carbs, 12g fat
-    - Reasoning: High protein, balanced macros, fits the user's needs.
+    - Return the response in **JSON format** with the following structure:
+    {
+      "recommendations": [
+        {
+          "mealName": string,
+          "estimatedNutrition": {
+            "calories": number,
+            "protein": number,
+            "carbs": number,
+            "fat": number
+          },
+          "reasoning": string
+        }
+      ]
+    }
+    Ensure the response is valid JSON without any markdown or code block markers (e.g., no \`\`\` or \`\`\`json).
   `;
-
+  console.log(prompt);
   const { success, message } = await callGeminiAPI(prompt);
 
   if (!success) {
     console.error("Gemini API Error: Failed to get recommendation.");
-    return "Could not generate a meal recommendation.";
+    return { recommendations: [] };
   }
+  console.log(message)
+  console.log(message);
 
-  console.log("Gemini Response:", message);
-  return message;
+  // Clean up the response to remove markdown code block markers
+  let cleanedMessage = message.trim();
+  // Remove ```json or ``` at the start and end
+  cleanedMessage = cleanedMessage.replace(/^```json\s*|\s*```$/g, "");
+  // Remove any remaining backticks or whitespace
+  cleanedMessage = cleanedMessage.replace(/^```|```$/g, "").trim();
+
+  try {
+    return JSON.parse(cleanedMessage);
+  } catch (error) {
+    console.error("Error parsing Gemini JSON response:", error);
+    console.error("Cleaned Response:", cleanedMessage);
+    return { recommendations: [] };
+  }
 };
 
 export const callOCR = async (image: OCRImage): Promise<string> => {

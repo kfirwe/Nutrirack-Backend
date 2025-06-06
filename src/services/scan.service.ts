@@ -33,9 +33,7 @@ export const callLogmealAPI = async (imageFile: Express.Multer.File) => {
 
         const compressedBuffer = await resizeImage(imageFile.buffer);
         const formData = prepareFormData(imageFile, compressedBuffer);
-
-        const response = await await uploadFoodImageToLogMeal(formData);
-
+        const response = await uploadFoodImageToLogMeal(formData);
         console.log("LogMeal Response:", response.data);
 
         if (
