@@ -64,7 +64,15 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
 export const updateUserData = async (req: Request, res: Response) => {
   try {
-    const { height, weight, goalWeight, age, gender, activityLevel } = req.body;
+    const {
+      height,
+      weight,
+      goalWeight,
+      age,
+      gender,
+      activityLevel,
+      foodPreferences,
+    } = req.body;
 
     if (!req.user) {
       res.status(401).json({ message: "Unauthorized" });
@@ -86,6 +94,9 @@ export const updateUserData = async (req: Request, res: Response) => {
     if (age !== undefined) updates.age = age;
     if (gender !== undefined) updates.gender = gender;
     if (activityLevel !== undefined) updates.activityLevel = activityLevel;
+    if (foodPreferences !== undefined) {
+      updates.foodPreferences = foodPreferences;
+    }
 
     Object.assign(user, updates, { lastLogin: new Date() });
 
