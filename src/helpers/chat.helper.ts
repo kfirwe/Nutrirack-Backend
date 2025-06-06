@@ -49,6 +49,11 @@ export const generateAIResponse = async (
       throw Error("User not found");
     }
 
+    let foodPreferences = user.foodPreferences;
+    if (!foodPreferences) {
+      foodPreferences = "non-vegetarian";
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -101,6 +106,8 @@ export const generateAIResponse = async (
         Carbs: ${remainingCarbs}g
         Fat: ${remainingFat}g
 
+        Meal preferences: ${foodPreferences}
+
         You should only refer to the meal history and remaining goals if the user asks about whether they can eat something or needs advice on food choices based on their goals. For general queries about food or nutrition, do not refer to meal history or goals.
   
         Respond in a friendly, helpful, and informative way.
@@ -141,6 +148,11 @@ export const generateAIResponseRecommendedFood = async (
       throw Error("User not found");
     }
 
+    let foodPreferences = user.foodPreferences;
+    if (!foodPreferences) {
+      foodPreferences = "non-vegetarian";
+    }
+
     const prompt = `
         You are NutriTrack, a smart AI nutrition assistant. Help the user with meal choices based on the remaining nutrition for ${mealTime}.
 
@@ -149,6 +161,10 @@ export const generateAIResponseRecommendedFood = async (
         Protein: ${remainingNutrition.protein}g
         Carbs: ${remainingNutrition.carbs}g
         Fat: ${remainingNutrition.fat}g
+
+        Meal preferences: ${foodPreferences}
+
+        Make sure to recommend meals that is not hard to prepare, and can be made with common ingredients.
 
         You should only refer to the meal time now and remaining goals.
   

@@ -30,17 +30,36 @@ async function sendPendingNotifications() {
   }
 }
 
-async function RecommendFoodThenPush() {
-  const now = moment().utc();
-  const time = now.format("HH:mm");
-  console.log(time);
-  if (now.hour() === 16 && now.minute() >= 0) {
-    // Also, if user didnt eat from 12:00 to 16:00, recommend him a meal, see how much nutrition values for the day remaining, and see some food from his 12:00 to 16:00 history that he can eat
+async function RecommendFoodThenPushByMealType(
+  now: moment.Moment,
+  time: string,
+  mealType: string
+) {
+  let startHour = null;
+  let endHour = null;
+  if (mealType === "breakfast") {
+    startHour = 6;
+    endHour = 10;
+  } else if (mealType === "lunch") {
+    startHour = 12;
+    endHour = 16;
+  } else if (mealType === "dinner") {
+    startHour = 18;
+    endHour = 22;
+  } else {
+    console.error("Invalid meal type provided");
+    return;
+  }
+  if (now.hour() === endHour && now.minute() >= 0) {
     const users = await User.find({
       pushToken: { $exists: true, $ne: null },
     });
     for (let user of users) {
-      const startOfWindow = moment().utc().startOf("day").hour(16).toDate();
+      const startOfWindow = moment()
+        .utc()
+        .startOf("day")
+        .hour(endHour)
+        .toDate();
       const now = moment().utc().toDate();
       const existingReminder = await Reminder.findOne({
         userId: user._id,
@@ -66,9 +85,12 @@ async function RecommendFoodThenPush() {
 
       if (
         lastMeal &&
-        moment(lastMeal.date).isBetween(moment().hour(12), moment().hour(16))
+        moment(lastMeal.date).isBetween(
+          moment().hour(startHour),
+          moment().hour(endHour)
+        )
       ) {
-        // User has eaten between 12:00 and 16:00
+        // User has eaten between startHour and endHour
       } else {
         // Recommend a meal based on remaining nutrition values
         const remainingNutrition = await getUserRemainingMacros(user._id);
@@ -91,13 +113,24 @@ async function RecommendFoodThenPush() {
             userId: user._id,
             notificationMessage: `We recommend you to eat ${recommendedMeal} for your remaining nutrition values.`,
             reminderTime: moment().toDate(),
-            mealType: moment().hour() <= 18 ? "lunch" : "dinner",
+            mealType: mealType,
             notificationSent: true,
           });
         }
       }
     }
   }
+}
+
+async function RecommendFoodThenPush() {
+  const now = moment().utc();
+  const time = now.format("HH:mm");
+  console.log(time);
+  await Promise.all([
+    RecommendFoodThenPushByMealType(now, time, "breakfast"),
+    RecommendFoodThenPushByMealType(now, time, "lunch"),
+    RecommendFoodThenPushByMealType(now, time, "dinner"),
+  ]);
 }
 
 async function SendStrikePush() {
@@ -153,9 +186,11 @@ async function SendStrikePush() {
 export const reminderNotificationScheduler = () => {
   setInterval(async () => {
     try {
-      await sendPendingNotifications();
-      await RecommendFoodThenPush();
-      await SendStrikePush();
+      await Promise.all([
+        sendPendingNotifications(),
+        RecommendFoodThenPush(),
+        SendStrikePush(),
+      ]);
     } catch (error) {
       console.error("Error checking for reminders:", error);
     }

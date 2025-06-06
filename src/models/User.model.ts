@@ -11,6 +11,7 @@ export interface IUser extends Document {
   weight: number;
   goalWeight: number;
   activityLevel: number;
+  foodPreferences: "vegetarian" | "non-vegetarian" | "vegan";
   goals: {
     calories: number;
     protein: number;
@@ -34,6 +35,11 @@ const UserSchema: Schema = new Schema(
     weight: { type: Number, required: false },
     goalWeight: { type: Number, required: false },
     activityLevel: { type: Number, required: false },
+    foodPreferences: {
+      type: String,
+      enum: ["vegetarian", "non-vegetarian", "vegan"],
+      required: false,
+    },
     goals: {
       calories: { type: Number, required: false },
       protein: { type: Number, required: false },
